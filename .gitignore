@@ -1,0 +1,35 @@
+# 🔁 Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 🧪 Entorno virtual (si usas uno después)
+venv/
+env/
+
+# 🧹 Archivos temporales y logs
+*.log
+*.swp
+
+# 🧱 VS Code
+.vscode/
+
+# 🛠️ PyInstaller (si usas para empaquetar)
+dist/
+build/
+*.spec
+
+# 🎨 Archivos de Qt Designer o backups
+*.qrc
+*.ui~
+*.bak
+
+# 🍏 macOS
+.DS_Store
+
+# 🧪 Cobertura de tests (si usas testing en el futuro)
+coverage/
+*.coverage
+
+# 🧠 PyCharm / JetBrains (por si usas otro editor)
+.idea/
