@@ -1,4 +1,4 @@
-<table>
+<table border="0">
   <tr>
     <td width="200">
       <img src="assets/logo-rgv-innovations.png" alt="Logo de RGV Innovations" width="180"/>
