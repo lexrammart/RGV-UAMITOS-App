@@ -1,16 +1,12 @@
-<table>
-  <tr>
-    <td width="200">
-      <img src="assets/logo-rgv-innovations.png" alt="Logo de RGV Innovations" width="180"/>
-    </td>
-    <td>
-      <h1>📚 RGV-UAMITOS-App</h1>
-      <strong>Aplicación educativa desarrollada por RGV Innovations para la Secundaria UAMITOS</strong><br>
-      Proyecto final de la materia <strong>Programación Visual Orientada a Eventos (PVOE)</strong><br>
-      Universidad Autónoma Metropolitana Unidad Azcapotzalco – 25-P
-    </td>
-  </tr>
-</table>
+<p align="center">
+  <img src="assets/logo-rgv-innovations.png" alt="Logo de RGV Innovations" width="200"/>
+</p>
+
+# 📚 RGV-UAMITOS-App
+
+**Aplicación educativa desarrollada por RGV Innovations para la Secundaria UAMITOS**  
+Proyecto final de la materia **Programación Visual Orientada a Eventos (PVOE)**  
+Universidad Autónoma Metropolitana Unidad Azcapotzalco – 25-P
 
 ---
 
@@ -18,9 +14,11 @@
 
 **RGV Innovations** está conformado por:
 
-- **J. Alejandro Ramírez Martínez** –
-- **Gustavo González Cortéz** –
-- **Yarid Vallejo Ocejo** –
+| Nombre                        | Rol / Participación |
+| ----------------------------- | ------------------- |
+| J. Alejandro Ramírez Martínez |                     |
+| Gustavo González Cortéz       |                     |
+| Yarid Vallejo Ocejo           |                     |
 
 ---
 
