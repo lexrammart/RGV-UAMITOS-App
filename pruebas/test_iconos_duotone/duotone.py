@@ -12,12 +12,12 @@ class VentanaPrincipal(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Prueba de Ícono Duotone")
-        self.setFixedSize(300, 200)
+        self.setFixedSize(600, 600)
 
         # Crear botón con ícono
         boton = QToolButton(self)
-        boton.setIcon(QIcon(os.path.join(current_dir, "hexagon.svg")))
-        boton.setIconSize(QSize(100, 100))  # Tamaño del ícono
+        boton.setIcon(QIcon(os.path.join(current_dir, "spinner.svg")))
+        boton.setIconSize(QSize(500, 500))  # Tamaño del ícono
         boton.setToolTip("Botón de prueba")
         boton.setObjectName("botonDuotone")  # Para aplicarle estilo desde QSS
         boton.move(100, 60)  # Posición del botón en la ventana
