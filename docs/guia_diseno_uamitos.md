@@ -9,7 +9,7 @@ Este documento contiene la configuración de estilo oficial de la aplicación, i
 | Nombre             | Hex       | Uso recomendado                          |
 | ------------------ | --------- | ---------------------------------------- |
 | Rojo institucional | `#B71C1C` | Color principal (títulos, botones clave) |
-| Gris oscuro        | `#424242` | Fondo de sidebar, texto secundario       |
+| Gris oscuro        | `#848484` | Fondo de sidebar, texto secundario       |
 | Gris claro         | `#E0E0E0` | Bordes, separadores, hover sutil         |
 | Blanco             | `#FFFFFF` | Fondo principal                          |
 | Gris muy claro     | `#FAFAFA` | Alternativa de fondo para claridad       |
