@@ -80,4 +80,4 @@ El diseño visual será una parte fundamental del proyecto. Buscamos lograr una 
 
 ## 🐾 Nota curiosa
 
-La secundaria cliente toma su nombre del personaje “**Uamito**”, la pantera mascota de la UAM Azcapotzalco. Este proyecto no solo es técnico, sino también afectivo: una colaboración entre niveles educativos de la misma comunidad universitaria.
+La secundaria cliente toma su nombre del personaje “**Uamito**”, la pantera mascota de la Universidad Autónoma Metropolitana.
