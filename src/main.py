@@ -11,7 +11,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Aplicación UAMITOS")
-        self.setGeometry(100, 100, 800, 600)
+        self.setGeometry(100, 100, 1100, 700)
         # Aquí se agregarán los elementos visuales (menús, botones, etc.)
 
         self.cargar_estilos()
