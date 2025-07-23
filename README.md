@@ -36,7 +36,7 @@ La aplicación busca brindar una solución interactiva orientada a las necesidad
 
 ## 🖥️ Tecnologías utilizadas
 
-- Python 3.x
+- Python 3.15
 - PyQt5 / PySide6
 - Qt Designer
 - Estilos visuales con QSS (Qt Style Sheets)
