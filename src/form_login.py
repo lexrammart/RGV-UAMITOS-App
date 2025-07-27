@@ -1,6 +1,8 @@
 from PyQt6 import QtCore, QtGui, QtWidgets
 import sys
 import os
+
+
 class Ui_Form(object):
     def setupUi(self, Form):
 
@@ -59,7 +61,9 @@ class Ui_Form(object):
         self.minimizeButton = QtWidgets.QPushButton(parent=self.backgroundFrame)
         self.minimizeButton.setGeometry(QtCore.QRect(200, 10, 20, 20))
         self.minimizeButton.setObjectName("minimizeButton")
-        self.minimizeButton.setCursor(QtGui.QCursor(QtCore.Qt.CursorShape.PointingHandCursor))
+        self.minimizeButton.setCursor(
+            QtGui.QCursor(QtCore.Qt.CursorShape.PointingHandCursor)
+        )
         self.minimizeButton.setText("–")
         self.minimizeButton.clicked.connect(Form.showMinimized)
 
@@ -67,7 +71,9 @@ class Ui_Form(object):
         self.closeButton = QtWidgets.QPushButton(parent=self.backgroundFrame)
         self.closeButton.setGeometry(QtCore.QRect(230, 10, 20, 20))
         self.closeButton.setObjectName("closeButton")
-        self.closeButton.setCursor(QtGui.QCursor(QtCore.Qt.CursorShape.PointingHandCursor))
+        self.closeButton.setCursor(
+            QtGui.QCursor(QtCore.Qt.CursorShape.PointingHandCursor)
+        )
         self.closeButton.setText("X")
         self.closeButton.clicked.connect(Form.close)
 
