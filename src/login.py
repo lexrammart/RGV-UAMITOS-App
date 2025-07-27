@@ -4,6 +4,7 @@ from PyQt6.QtWidgets import QApplication, QWidget
 from PyQt6.QtCore import Qt, QTimer
 from form_login import Ui_Form
 
+
 def main():
     app = QApplication(sys.argv)
 
@@ -29,6 +30,7 @@ def main():
 
     window.show()
     sys.exit(app.exec())
+
 
 if __name__ == "__main__":
     main()
