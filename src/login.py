@@ -5,8 +5,64 @@ from PyQt6.QtCore import Qt, QTimer
 from form_login import Ui_Form
 
 
-def main():
+# Nueva función para conectar a MySQL
+def conectar_bd():
+    import mysql.connector
+
+    return mysql.connector.connect(
+        host="crossover.proxy.rlwy.net",
+        port=47969,
+        user="root",
+        password="SLaGFdbUHnvacvsiqkMpoeklIyGjelok",
+        database="railway",
+    )
+
+
+def login():
     app = QApplication(sys.argv)
+    conexion = conectar_bd()
+    # Insertar usuario de prueba
+
+    try:
+        cursor = conexion.cursor()
+        cursor.execute(
+            """
+            INSERT INTO usuarios (
+                numero_economico,
+                nombre,
+                apellido_p,
+                apellido_m,
+                fecha_nacimiento,
+                sexo,
+                telefono,
+                email,
+                direccion,
+                password,
+                estado
+            ) VALUES (
+                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+            )
+        """,
+            (
+                "A001",
+                "Alejandro",
+                "Ramírez",
+                "M",
+                "2000-01-01",
+                "M",
+                "5551234567",
+                "alejandro@example.com",
+                "Calle Falsa 123",
+                "1234",
+                True,
+            ),
+        )
+        conexion.commit()
+        print("✅ Usuario de prueba insertado")
+    except Exception as e:
+        print("⚠️ No se pudo insertar el usuario de prueba:", e)
+
+    cursor.close()
 
     # Cargar estilos si existe el archivo
     qss_path = "estilos/login.qss"
@@ -32,5 +88,5 @@ def main():
     sys.exit(app.exec())
 
 
-if __name__ == "__main__":
-    main()
+# if __name__ == "__main__":
+#     login()
