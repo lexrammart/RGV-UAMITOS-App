@@ -33,3 +33,5 @@ coverage/
 
 # 🧠 PyCharm / JetBrains (por si usas otro editor)
 .idea/
+
+.DS_Store
