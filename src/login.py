@@ -74,7 +74,7 @@ def login():
     # cursor.close()
 
     # Cargar estilos si existe el archivo
-    qss_path = "estilos/login.qss"
+    qss_path = "styles/login.qss"
     if os.path.exists(qss_path):
         with open(qss_path, "r") as f:
             app.setStyleSheet(f.read())
