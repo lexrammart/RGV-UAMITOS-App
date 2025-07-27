@@ -23,46 +23,55 @@ def login():
     conexion = conectar_bd()
     # Insertar usuario de prueba
 
-    try:
-        cursor = conexion.cursor()
-        cursor.execute(
-            """
-            INSERT INTO usuarios (
-                numero_economico,
-                nombre,
-                apellido_p,
-                apellido_m,
-                fecha_nacimiento,
-                sexo,
-                telefono,
-                email,
-                direccion,
-                password,
-                estado
-            ) VALUES (
-                %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
-            )
-        """,
-            (
-                "A001",
-                "Alejandro",
-                "Ramírez",
-                "M",
-                "2000-01-01",
-                "M",
-                "5551234567",
-                "alejandro@example.com",
-                "Calle Falsa 123",
-                "1234",
-                True,
-            ),
-        )
-        conexion.commit()
-        print("✅ Usuario de prueba insertado")
-    except Exception as e:
-        print("⚠️ No se pudo insertar el usuario de prueba:", e)
-
-    cursor.close()
+    # try:
+    #     cursor = conexion.cursor()
+    #     cursor.execute("SELECT numero_economico FROM usuarios ORDER BY id DESC LIMIT 1")
+    #     resultado = cursor.fetchone()
+    #     if resultado and resultado[0][1:].isdigit():
+    #         ultimo_numero = int(resultado[0][1:])
+    #     else:
+    #         ultimo_numero = 0
+    #     nuevo_numero = ultimo_numero + 1
+    #     numero_economico = f"A{nuevo_numero:03}"
+    #
+    #     cursor.execute(
+    #         """
+    #         INSERT INTO usuarios (
+    #             numero_economico,
+    #             nombre,
+    #             apellido_p,
+    #             apellido_m,
+    #             fecha_nacimiento,
+    #             sexo,
+    #             telefono,
+    #             email,
+    #             direccion,
+    #             password,
+    #             estado
+    #         ) VALUES (
+    #             %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
+    #         )
+    #     """,
+    #         (
+    #             numero_economico,
+    #             "Leonardo",
+    #             "Vallejo",
+    #             "M",
+    #             "2000-01-01",
+    #             "M",
+    #             "5551234567",
+    #             "leonardo@example.com",
+    #             "Calle Falsa 123",
+    #             "1234",
+    #             True,
+    #         ),
+    #     )
+    #     conexion.commit()
+    #     print("✅ Usuario de prueba insertado")
+    # except Exception as e:
+    #     print("⚠️ No se pudo insertar el usuario de prueba:", e)
+    #
+    # cursor.close()
 
     # Cargar estilos si existe el archivo
     qss_path = "estilos/login.qss"
