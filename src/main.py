@@ -24,6 +24,9 @@ class MainWindow(QMainWindow):
             self.setStyleSheet(style)
             file.close()
 
+            """ jkladsflkjalñdfjañfj
+            """
+
 
 if __name__ == "__main__":
     app = QApplication(sys.argv)
