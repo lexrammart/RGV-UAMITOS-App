@@ -1,80 +1,15 @@
 import sys
 import os
-from PyQt6.QtWidgets import QApplication, QWidget
-from PyQt6.QtCore import Qt, QTimer
+from PySide6.QtWidgets import *
+from PySide6.QtCore import *
 from form_login import Ui_Form
-
-
-# Nueva función para conectar a MySQL
-def conectar_bd():
-    import mysql.connector
-
-    return mysql.connector.connect(
-        host="crossover.proxy.rlwy.net",
-        port=47969,
-        user="root",
-        password="SLaGFdbUHnvacvsiqkMpoeklIyGjelok",
-        database="railway",
-    )
+from db_connection import login_validation
 
 
 def login():
     app = QApplication(sys.argv)
-    conexion = conectar_bd()
-    # Insertar usuario de prueba
 
-    # try:
-    #     cursor = conexion.cursor()
-    #     cursor.execute("SELECT numero_economico FROM usuarios ORDER BY id DESC LIMIT 1")
-    #     resultado = cursor.fetchone()
-    #     if resultado and resultado[0][1:].isdigit():
-    #         ultimo_numero = int(resultado[0][1:])
-    #     else:
-    #         ultimo_numero = 0
-    #     nuevo_numero = ultimo_numero + 1
-    #     numero_economico = f"A{nuevo_numero:03}"
-    #
-    #     cursor.execute(
-    #         """
-    #         INSERT INTO usuarios (
-    #             numero_economico,
-    #             nombre,
-    #             apellido_p,
-    #             apellido_m,
-    #             fecha_nacimiento,
-    #             sexo,
-    #             telefono,
-    #             email,
-    #             direccion,
-    #             password,
-    #             estado
-    #         ) VALUES (
-    #             %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s
-    #         )
-    #     """,
-    #         (
-    #             numero_economico,
-    #             "Leonardo",
-    #             "Vallejo",
-    #             "M",
-    #             "2000-01-01",
-    #             "M",
-    #             "5551234567",
-    #             "leonardo@example.com",
-    #             "Calle Falsa 123",
-    #             "1234",
-    #             True,
-    #         ),
-    #     )
-    #     conexion.commit()
-    #     print("✅ Usuario de prueba insertado")
-    # except Exception as e:
-    #     print("⚠️ No se pudo insertar el usuario de prueba:", e)
-    #
-    # cursor.close()
-
-    # Cargar estilos si existe el archivo
-    qss_path = "estilos/login.qss"
+    qss_path = "styles/login.qss"
     if os.path.exists(qss_path):
         with open(qss_path, "r") as f:
             app.setStyleSheet(f.read())
@@ -92,6 +27,15 @@ def login():
     x = int((screen_geometry.width() - window.width()) / 2)
     y = int((screen_geometry.height() - window.height()) / 2)
     window.move(x, y)
+
+    @Slot()
+    def user_login():
+        email = ui.usernameInput.text()
+        password = ui.passwordInput.text()
+
+        login_validation(email, password)
+
+    ui.loginButton.clicked.connect(user_login)
 
     window.show()
     sys.exit(app.exec())
