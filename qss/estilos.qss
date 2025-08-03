@@ -188,3 +188,8 @@ QWidget#pagina_acercade QLabel {
 QWidget#pagina_acercade {
     background-color: #ffffff;
 }
+
+
+QLineEdit::placeholder {
+    color: #bbb; /* O el color tenue que prefieras */
+}

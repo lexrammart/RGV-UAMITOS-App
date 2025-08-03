@@ -58,3 +58,24 @@ def actualizar_campo(
     except Exception as e:
         print("Error al actualizar campo:", e)
         return False
+
+
+def actualizar_campos(
+    tabla, campos_valores, campo_condicion, valor_condicion, connect_func
+):
+    try:
+        conexion = connect_func()
+        cursor = conexion.cursor()
+
+        sets = ", ".join(f"{campo} = %s" for campo in campos_valores.keys())
+        valores = list(campos_valores.values()) + [valor_condicion]
+
+        query = f"UPDATE {tabla} SET {sets} WHERE {campo_condicion} = %s"
+        cursor.execute(query, valores)
+        conexion.commit()
+        cursor.close()
+        conexion.close()
+        return True
+    except Exception as e:
+        print("❌ Error al actualizar campos:", e)
+        return False

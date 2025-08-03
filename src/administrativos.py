@@ -1500,6 +1500,29 @@ class MainWindow(QMainWindow):
         self.ui.input_buscar_baja.textChanged.connect(self.actualizar_combo_baja)
         self.ui.combo_baja_alumno.currentIndexChanged.connect(self.mostrar_info_baja)
 
+        self.ui.input_buscar_update.textChanged.connect(self.actualizar_combo_update)
+        self.ui.input_nombre_update.returnPressed.connect(
+            self.autocompletar_campo_update
+        )
+        self.ui.input_ap_paterno_update.returnPressed.connect(
+            self.autocompletar_campo_update
+        )
+        self.ui.input_ap_materno_update.returnPressed.connect(
+            self.autocompletar_campo_update
+        )
+        self.ui.input_direccion_update.returnPressed.connect(
+            self.autocompletar_campo_update
+        )
+        self.ui.input_correo_update.returnPressed.connect(
+            self.autocompletar_campo_update
+        )
+        self.ui.combo_update_alumno.currentIndexChanged.connect(
+            self.mostrar_info_update
+        )
+
+        self.ui.btn_guardar_update.clicked.connect(self.guardar_cambios_update)
+        self.ui.btn_cancelar_update.clicked.connect(self.limpiar_formulario_update)
+
     def cerrar_sesion(self):
         import subprocess
         import sys
@@ -1805,6 +1828,183 @@ class MainWindow(QMainWindow):
             self.ui.group_info_alumno.show()
         else:
             self.ui.group_info_alumno.hide()
+
+    # combo baja
+    def actualizar_combo_update(self):
+        texto = self.ui.input_buscar_update.text().strip().upper()
+
+        if not texto:
+            self.ui.combo_update_alumno.clear()
+            return
+
+        try:
+            conexion = connect_db()
+            cursor = conexion.cursor()
+            query = """
+                SELECT matricula, nombre, apellido_paterno, apellido_materno
+                FROM alumnos
+                WHERE
+                    activo = TRUE AND (
+                        matricula LIKE %s OR
+                        nombre LIKE %s OR
+                        apellido_paterno LIKE %s OR
+                        apellido_materno LIKE %s
+                    )
+            """
+            valores = (f"%{texto}%",) * 4
+            cursor.execute(query, valores)
+            resultados = cursor.fetchall()
+            cursor.close()
+            conexion.close()
+
+            self.ui.combo_update_alumno.clear()
+            for alumno in resultados:
+                matricula = alumno[0]
+                nombre = alumno[1]
+                ap_paterno = alumno[2]
+                ap_materno = alumno[3]
+
+                etiqueta = f"{matricula} - {nombre} {ap_paterno} {ap_materno}"
+                self.ui.combo_update_alumno.addItem(etiqueta, matricula)
+
+        except Exception as e:
+            print("❌ Error al buscar alumnos para actualizar:", e)
+
+    # mostrar info update formulario
+    def mostrar_info_update(self):
+        matricula = self.ui.combo_update_alumno.currentData()
+        if not matricula:
+            return
+
+        from data_access.insertar_datos_dao import obtener_registro_por_campo
+
+        alumno = obtener_registro_por_campo(
+            "alumnos", "matricula", matricula, connect_db
+        )
+
+        if alumno:
+            self.ui.input_nombre_update.clear()
+            self.ui.input_ap_paterno_update.clear()
+            self.ui.input_ap_materno_update.clear()
+            self.ui.input_direccion_update.clear()
+            self.ui.input_correo_update.clear()
+
+            self.ui.input_nombre_update.setPlaceholderText(alumno["nombre"])
+            self.ui.input_ap_paterno_update.setPlaceholderText(
+                alumno["apellido_paterno"]
+            )
+            self.ui.input_ap_materno_update.setPlaceholderText(
+                alumno["apellido_materno"]
+            )
+            self.ui.input_direccion_update.setPlaceholderText(alumno["direccion"])
+            self.ui.input_correo_update.setPlaceholderText(alumno["correo"])
+
+            index_periodo = self.ui.combo_periodo_update.findText(
+                alumno["periodo_ingreso"]
+            )
+            if index_periodo != -1:
+                self.ui.combo_periodo_update.setCurrentIndex(index_periodo)
+
+            self.ui.check_activo_update.setChecked(alumno["activo"])
+
+            # Guardamos los datos actuales por si se presiona Enter
+            self.datos_actuales_update = alumno
+
+    # aucotcompletado
+    def autocompletar_campo_update(self):
+        campo = self.sender()
+        if campo.text().strip() == "":
+            if campo == self.ui.input_nombre_update:
+                campo.setText(self.datos_actuales_update.get("nombre", ""))
+            elif campo == self.ui.input_ap_paterno_update:
+                campo.setText(self.datos_actuales_update.get("apellido_paterno", ""))
+            elif campo == self.ui.input_ap_materno_update:
+                campo.setText(self.datos_actuales_update.get("apellido_materno", ""))
+            elif campo == self.ui.input_direccion_update:
+                campo.setText(self.datos_actuales_update.get("direccion", ""))
+            elif campo == self.ui.input_correo_update:
+                campo.setText(self.datos_actuales_update.get("correo", ""))
+
+    # guardar cambios
+    def guardar_cambios_update(self):
+        from data_access.insertar_datos_dao import actualizar_campos
+
+        matricula = self.ui.combo_update_alumno.currentData()
+        if not matricula or not self.datos_actuales_update:
+            QtWidgets.QMessageBox.warning(
+                self, "Error", "No se seleccionó ningún alumno."
+            )
+            return
+
+        # ⛑️ Autocompletar los campos vacíos con los datos actuales
+        if self.ui.input_nombre_update.text().strip() == "":
+            self.ui.input_nombre_update.setText(self.datos_actuales_update["nombre"])
+        if self.ui.input_ap_paterno_update.text().strip() == "":
+            self.ui.input_ap_paterno_update.setText(
+                self.datos_actuales_update["apellido_paterno"]
+            )
+        if self.ui.input_ap_materno_update.text().strip() == "":
+            self.ui.input_ap_materno_update.setText(
+                self.datos_actuales_update["apellido_materno"]
+            )
+        if self.ui.input_direccion_update.text().strip() == "":
+            self.ui.input_direccion_update.setText(
+                self.datos_actuales_update["direccion"]
+            )
+        if self.ui.input_correo_update.text().strip() == "":
+            self.ui.input_correo_update.setText(self.datos_actuales_update["correo"])
+
+        nuevos_datos = {
+            "nombre": self.ui.input_nombre_update.text().strip().upper(),
+            "apellido_paterno": self.ui.input_ap_paterno_update.text().strip().upper(),
+            "apellido_materno": self.ui.input_ap_materno_update.text().strip().upper(),
+            "direccion": self.ui.input_direccion_update.text().strip().upper(),
+            "correo": self.ui.input_correo_update.text().strip().lower(),
+            "periodo_ingreso": self.ui.combo_periodo_update.currentText(),
+            "activo": self.ui.check_activo_update.isChecked(),
+        }
+
+        # 📌 Comparar contra los datos actuales para detectar cambios
+        cambios = {}
+        for campo, nuevo_valor in nuevos_datos.items():
+            if nuevo_valor != self.datos_actuales_update[campo]:
+                cambios[campo] = nuevo_valor
+
+        if not cambios:
+            QtWidgets.QMessageBox.information(
+                self, "Sin cambios", "No se realizaron modificaciones."
+            )
+            return
+
+        exito = actualizar_campos(
+            "alumnos", cambios, "matricula", matricula, connect_db
+        )
+
+        if exito:
+            QtWidgets.QMessageBox.information(
+                self, "Éxito", "Datos actualizados correctamente."
+            )
+            self.limpiar_formulario_update()
+        else:
+            QtWidgets.QMessageBox.critical(
+                self, "Error", "No se pudo actualizar el registro."
+            )
+
+    # limpiar update form
+    def limpiar_formulario_update(self):
+        self.ui.input_buscar_update.clear()
+        self.ui.combo_update_alumno.clear()
+
+        self.ui.input_nombre_update.clear()
+        self.ui.input_ap_paterno_update.clear()
+        self.ui.input_ap_materno_update.clear()
+        self.ui.input_direccion_update.clear()
+        self.ui.input_correo_update.clear()
+
+        self.ui.combo_periodo_update.setCurrentIndex(0)
+        self.ui.check_activo_update.setChecked(True)
+
+        self.datos_actuales_update = {}
 
 
 if __name__ == "__main__":
