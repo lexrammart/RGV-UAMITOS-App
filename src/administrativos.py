@@ -3,6 +3,8 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QFileDialog
 from PySide6.QtGui import QActionGroup
 import sys
 import datetime
+import subprocess
+import os
 import recursos
 
 
@@ -1439,6 +1441,9 @@ class MainWindow(QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
+        self.ui.btn_logout.clicked.connect(self.cerrar_sesion)
+        self.ui.btn_acercade_texto.clicked.connect(self.cerrar_sesion)
+
         # ✅ Conexión de botón para seleccionar archivo de documento
         self.ui.btn_seleccionar_archivo.clicked.connect(
             self.seleccionar_archivo_documento
@@ -1465,6 +1470,16 @@ class MainWindow(QMainWindow):
 
         # Variable para guardar ruta de documento seleccionado
         self.ruta_documento_seleccionado = None
+
+    def cerrar_sesion(self):
+        import subprocess
+        import sys
+        import os
+
+        ruta_login = os.path.join(os.path.dirname(__file__), "login.py")
+        print("⚠️ Cerrando sesión y lanzando login.py...")
+        subprocess.Popen([sys.executable, ruta_login])
+        self.close()
 
     def seleccionar_archivo_documento(self):
         ruta_archivo, _ = QFileDialog.getOpenFileName(

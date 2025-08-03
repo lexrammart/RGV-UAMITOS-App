@@ -29,28 +29,103 @@ def connect_db():
 def login_validation(email, password):
     connection = connect_db()
     if not connection:
-        return "Error de conexión a la base de datos."
+        return None, "Error de conexión a la base de datos."
 
     try:
-        with connection.cursor() as cursor:
-            cursor.execute("SELECT contrasena FROM usuarios WHERE email = %s", (email,))
+        with connection.cursor(pymysql.cursors.DictCursor) as cursor:
+            cursor.execute(
+                "SELECT contrasena, rol FROM usuarios WHERE email = %s AND activo = TRUE",
+                (email,),
+            )
             result = cursor.fetchone()
 
             if not result:
-                return "El usuario no existe."
+                return None, "El usuario no existe."
 
-            # Si el usuario existe, comparamos la contraseña
-            saved_hash = result[0].encode("utf-8")
+            saved_hash = result["contrasena"].encode("utf-8")
             if bcrypt.checkpw(password.encode("utf-8"), saved_hash):
-
-                return "OK"  # Login exitoso
+                rol = result["rol"]
+                return rol, "OK"
             else:
-                return "Contraseña incorrecta."
+                return None, "Contraseña incorrecta."
     except Exception as e:
         print(f"ERROR DE LOGIN {e}")
-        return "Error durante la validación."
+        return None, "Error durante la validación."
     finally:
         connection.close()
+
+
+#############################################################################################
+
+# def insertar_usuarios_admin_prof():
+#     usuarios = [
+#         {
+#             "numero_economico": "A010",
+#             "nombre": "David",
+#             "apellido_paterno": "Aranda",
+#             "apellido_materno": "A",
+#             "fecha_nacimiento": "2000-01-01",
+#             "sexo": "M",
+#             "telefono": "5550001234",
+#             "email": "admin.david@admin.com",
+#             "direccion": "CDMX",
+#             "rol": "administrativo",
+#             "contrasena": "admin",
+#         },
+#         {
+#             "numero_economico": "P001",
+#             "nombre": "Raziel",
+#             "apellido_paterno": "Soto",
+#             "apellido_materno": "J",
+#             "fecha_nacimiento": "1995-08-20",
+#             "sexo": "M",
+#             "telefono": "5550005678",
+#             "email": "prof.raziel@prof.com",
+#             "direccion": "CDMX",
+#             "rol": "profesor",
+#             "contrasena": "admin",
+#         },
+#     ]
+
+#     try:
+#         conn = connect_db()
+#         cursor = conn.cursor()
+
+#         for u in usuarios:
+#             hashed_password = bcrypt.hashpw(
+#                 u["contrasena"].encode("utf-8"), bcrypt.gensalt()
+#             ).decode("utf-8")
+
+#             cursor.execute(
+#                 """
+#                 INSERT INTO usuarios (
+#                     numero_economico, nombre, apellido_paterno, apellido_materno,
+#                     fecha_nacimiento, sexo, telefono, email, direccion,
+#                     rol, contrasena, activo
+#                 ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+#             """,
+#                 (
+#                     u["numero_economico"],
+#                     u["nombre"],
+#                     u["apellido_paterno"],
+#                     u["apellido_materno"],
+#                     u["fecha_nacimiento"],
+#                     u["sexo"],
+#                     u["telefono"],
+#                     u["email"],
+#                     u["direccion"],
+#                     u["rol"],
+#                     hashed_password,
+#                     True,
+#                 ),
+#             )
+
+#         conn.commit()
+#         cursor.close()
+#         conn.close()
+#         print("✅ Usuarios insertados correctamente.")
+#     except Exception as e:
+#         print(f"❌ Error al insertar usuarios: {e}")
 
 
 # Inserta usuarios temporales automáticamente al establecer la primera conexión

@@ -1,7 +1,8 @@
 from PySide6 import QtCore, QtGui, QtWidgets
 import sys
 import os
-from db_connection import login_validation
+from db_connection import login_validation  # , insertar_usuarios_admin_prof
+import subprocess
 
 
 class Ui_Form(object):
@@ -124,11 +125,19 @@ def main():
         email = ui.usernameInput.text().strip()
         password = ui.passwordInput.text().strip()
 
-        result = login_validation(email, password)
+        rol, result = login_validation(email, password)
         if result == "OK":
             ui.errorLabel.setVisible(False)
             print("Login exitoso desde la consola")
+
             # Aquí podrías cerrar esta ventana y abrir la ventana principal de tu aplicación
+            if rol == "administrativo":
+                subprocess.Popen(["python3", "src/administrativos.py"])
+                window.close()
+            else:
+                ui.errorLabel.setText(f"Rol no soportado {rol}")
+                ui.errorLabel.setVisible(True)
+
         else:
             ui.errorLabel.setText(result)
             ui.errorLabel.setVisible(True)
@@ -165,5 +174,22 @@ def main():
     sys.exit(app.exec())
 
 
+def abrir_login():
+    app = QtWidgets.QApplication(sys.argv)
+    if os.path.exists("qss/login.qss"):
+        with open("qss/login.qss", "r") as f:
+            app.setStyleSheet(f.read())
+
+    window = QtWidgets.QWidget()
+    ui = Ui_Form()
+    ui.setupUi(window)
+
+    main()
+
+    window.show()
+    sys.exit(app.exec())
+
+
 if __name__ == "__main__":
+    # insertar_usuarios_admin_prof()
     main()
