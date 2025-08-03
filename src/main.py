@@ -1,5 +1,5 @@
 from login import login
-from db_connection import connect_db  # insertar_usuarios_temporales
+from db_connection import connect_db  # , insertar_usuarios_iniciales
 
 
 def main():
@@ -7,8 +7,8 @@ def main():
     if connection:
         print("La base de datos está lista")
 
+    # insertar_usuarios_iniciales()
     login()
-    # insertar_usuarios_temporales()
 
 
 if __name__ == "__main__":

@@ -49,9 +49,20 @@ def login_validation(email, password):
         print(f"ERROR DE LOGIN {e}")
 
 
-# Inserta usuarios temporales automáticamente al establecer la primera conexión
-# def insertar_usuarios_temporales():
+# def insertar_usuarios_iniciales():
 #     usuarios = [
+#         (
+#             "ADM01",
+#             "Admin",
+#             "General",
+#             "",
+#             "1990-01-01",
+#             "M",
+#             "5551112233",
+#             "admin@uamitos.edu.mx",
+#             "Dirección UAMITOS",
+#             "directivo",
+#         ),
 #         (
 #             "U001",
 #             "Alejandro",
@@ -62,7 +73,7 @@ def login_validation(email, password):
 #             "5551234567",
 #             "ale@mail.com",
 #             "CDMX",
-#             "profesor",
+#             "directivo",
 #         ),
 #         (
 #             "U002",
@@ -74,19 +85,7 @@ def login_validation(email, password):
 #             "5557654321",
 #             "gus@mail.com",
 #             "CDMX",
-#             "profesor",
-#         ),
-#         (
-#             "U003",
-#             "Leonardo",
-#             "Vallejo",
-#             "O",
-#             "2000-01-03",
-#             "M",
-#             "5550001111",
-#             "leo@mail.com",
-#             "CDMX",
-#             "profesor",
+#             "directivo",
 #         ),
 #     ]
 
@@ -94,6 +93,7 @@ def login_validation(email, password):
 #         connection = connect_db()
 #         cursor = connection.cursor()
 
+#         # Contraseña hash para todos ("1234")
 #         hashed_password = bcrypt.hashpw(
 #             "1234".encode("utf-8"), bcrypt.gensalt()
 #         ).decode("utf-8")
@@ -102,17 +102,27 @@ def login_validation(email, password):
 #             cursor.execute(
 #                 """
 #                 INSERT INTO usuarios (
-#                     numero_economico, nombre, apellido_paterno, apellido_materno,
-#                     fecha_nacimiento, sexo, telefono, email, direccion,
-#                     rol, contrasena, activo
+#                     numero_economico,
+#                     nombre,
+#                     apellido_paterno,
+#                     apellido_materno,
+#                     fecha_nacimiento,
+#                     sexo,
+#                     telefono,
+#                     email,
+#                     direccion,
+#                     rol,
+#                     contrasena,
+#                     activo
 #                 ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-#             """,
+#                 """,
 #                 (*u, hashed_password, True),
 #             )
 
 #         connection.commit()
 #         cursor.close()
 #         connection.close()
-#         print("✅ Usuarios temporales insertados correctamente")
+#         print("✅ Usuarios iniciales insertados correctamente")
+
 #     except Exception as e:
-#         print(f"❌ Error al insertar usuarios temporales: {e}")
+#         print(f"❌ Error al insertar usuarios iniciales: {e}")
