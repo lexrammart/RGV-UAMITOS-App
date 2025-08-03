@@ -3,6 +3,8 @@ from PySide6.QtWidgets import QApplication, QMainWindow, QFileDialog
 from PySide6.QtGui import QActionGroup
 import sys
 import datetime
+from data_access.insertar_datos_dao import *
+from db_connection import connect_db  # <-- Importar conectar
 import subprocess
 import os
 import recursos
@@ -911,6 +913,10 @@ class Ui_MainWindow(object):
         btn_layout_alta = QtWidgets.QHBoxLayout()
         btn_layout_alta.addStretch()
         self.btn_guardar_alta = QtWidgets.QPushButton("Dar de Alta Alumno")
+
+        # self.btn_guardar_alta.clicked.connect(
+        #     self.dar_alta_alumno
+        # )  # ============================================================= Guardar alta connection
         self.btn_cancelar_alta = QtWidgets.QPushButton("Cancelar")
         btn_layout_alta.addWidget(self.btn_guardar_alta)
         btn_layout_alta.addWidget(self.btn_cancelar_alta)
@@ -932,6 +938,21 @@ class Ui_MainWindow(object):
         baja_layout.addWidget(QtWidgets.QLabel("Buscar Alumno:"))
         baja_layout.addWidget(self.input_buscar_baja)
         baja_layout.addWidget(self.combo_baja_alumno)
+
+        # Info del alumno seleccionado
+        self.group_info_alumno = QtWidgets.QGroupBox("Información del Alumno")
+        self.group_info_alumno.hide()
+        info_layout = QtWidgets.QVBoxLayout(self.group_info_alumno)
+        self.label_info_matricula = QtWidgets.QLabel("Matrícula: -")
+        self.label_info_nombre = QtWidgets.QLabel("Nombre: -")
+        self.label_info_direccion = QtWidgets.QLabel("Dirección: -")
+        self.label_info_correo = QtWidgets.QLabel("Correo: -")
+        info_layout.addWidget(self.label_info_matricula)
+        info_layout.addWidget(self.label_info_nombre)
+        info_layout.addWidget(self.label_info_direccion)
+        info_layout.addWidget(self.label_info_correo)
+        baja_layout.addWidget(self.group_info_alumno)  # 💡 debajo del combo
+
         baja_layout.addStretch()
         baja_layout.addWidget(self.btn_baja_alumno)
         self.stack_alumnos.addWidget(self.page_baja_alumno)
@@ -1441,6 +1462,7 @@ class MainWindow(QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
+        # conexión cerrar sesión
         self.ui.btn_logout.clicked.connect(self.cerrar_sesion)
         self.ui.btn_acercade_texto.clicked.connect(self.cerrar_sesion)
 
@@ -1470,6 +1492,13 @@ class MainWindow(QMainWindow):
 
         # Variable para guardar ruta de documento seleccionado
         self.ruta_documento_seleccionado = None
+
+        # conexión para alumno
+        self.ui.btn_guardar_alta.clicked.connect(self.dar_alta_alumno)
+        self.ui.btn_cancelar_alta.clicked.connect(self.limpiar_campos_alta_alumno)
+        self.ui.btn_baja_alumno.clicked.connect(self.dar_baja_alumno)
+        self.ui.input_buscar_baja.textChanged.connect(self.actualizar_combo_baja)
+        self.ui.combo_baja_alumno.currentIndexChanged.connect(self.mostrar_info_baja)
 
     def cerrar_sesion(self):
         import subprocess
@@ -1582,6 +1611,200 @@ class MainWindow(QMainWindow):
 
         else:
             print("⚠️ No se encontró ninguna coincidencia.")
+
+    # ========================== limpiar datos: alumno
+    def limpiar_campos_alta_alumno(self):
+        self.ui.input_nombre_alta.clear()
+        self.ui.input_ap_paterno_alta.clear()
+        self.ui.input_ap_materno_alta.clear()
+        self.ui.input_fecha_nacimiento_alta.setDate(QtCore.QDate.currentDate())
+        self.ui.input_direccion_alta.clear()
+        self.ui.input_correo_alta.clear()
+        self.ui.input_matricula_alta.clear()
+        self.ui.combo_periodo_ingreso.setCurrentIndex(0)
+        self.ui.check_activo_alta.setChecked(False)
+
+    def dar_alta_alumno(self):
+        nombre = self.ui.input_nombre_alta.text().strip().upper()
+        apellido_paterno = self.ui.input_ap_paterno_alta.text().strip().upper()
+        apellido_materno = self.ui.input_ap_materno_alta.text().strip().upper()
+        fecha_nacimiento_qdate = self.ui.input_fecha_nacimiento_alta.date()
+        fecha_nacimiento = fecha_nacimiento_qdate.toString("yyyy-MM-dd")
+        direccion = self.ui.input_direccion_alta.text().strip().upper()
+        correo = self.ui.input_correo_alta.text().strip().lower()
+        matricula = self.ui.input_matricula_alta.text().strip().upper()
+        periodo_ingreso = self.ui.combo_periodo_ingreso.currentText()
+        activo = self.ui.check_activo_alta.isChecked()
+
+        # Validación básica
+        if not all(
+            [
+                nombre,
+                apellido_paterno,
+                apellido_materno,
+                fecha_nacimiento,
+                direccion,
+                correo,
+                matricula,
+                periodo_ingreso,
+            ]
+        ):
+            QtWidgets.QMessageBox.warning(
+                self,
+                "Campos incompletos",
+                "Por favor, llena todos los campos antes de guardar.",
+            )
+            return
+
+        datos_alumno = {
+            "nombre": nombre,
+            "apellido_paterno": apellido_paterno,
+            "apellido_materno": apellido_materno,
+            "fecha_nacimiento": fecha_nacimiento,
+            "direccion": direccion,
+            "correo": correo,
+            "matricula": matricula,
+            "periodo_ingreso": periodo_ingreso,
+            "activo": activo,
+        }
+
+        exito = insertar_registro("alumnos", datos_alumno, connect_db)
+
+        if exito:
+            QtWidgets.QMessageBox.information(
+                self, "Éxito", "Alumno registrado correctamente."
+            )
+            self.limpiar_campos_alta_alumno()
+        else:
+            QtWidgets.QMessageBox.critical(
+                self, "Error", "No se pudo registrar al alumno."
+            )
+
+    # combo baja
+    def actualizar_combo_baja(self):
+        texto = self.ui.input_buscar_baja.text().strip().upper()
+
+        if not texto:
+            self.ui.combo_baja_alumno.clear()
+            return
+
+        try:
+            conexion = connect_db()
+            cursor = conexion.cursor()
+            query = """
+                SELECT matricula, nombre, apellido_paterno, apellido_materno
+                FROM alumnos
+                WHERE
+                    activo = TRUE AND (
+                        matricula LIKE %s OR
+                        nombre LIKE %s OR
+                        apellido_paterno LIKE %s OR
+                        apellido_materno LIKE %s
+                    )
+            """
+            valores = (f"%{texto}%", f"%{texto}%", f"%{texto}%", f"%{texto}%")
+            cursor.execute(query, valores)
+            resultados = cursor.fetchall()
+            cursor.close()
+            conexion.close()
+
+            self.ui.combo_baja_alumno.clear()
+            for alumno in resultados:
+                matricula = alumno[0]
+                nombre = alumno[1]
+                ap_paterno = alumno[2]
+                ap_materno = alumno[3]
+
+                nombre_completo = f"{nombre} {ap_paterno} {ap_materno}"
+                etiqueta = f"{matricula} - {nombre_completo}"
+                self.ui.combo_baja_alumno.addItem(etiqueta, matricula)
+
+        except Exception as e:
+            print("❌ Error al buscar alumnos:", e)
+
+    # ========= Dar de baja alumno
+    def dar_baja_alumno(self):
+        criterio = self.ui.combo_baja_alumno.currentData()
+        print("🧪 Matrícula seleccionada:", criterio)
+
+        if not criterio:
+            QtWidgets.QMessageBox.warning(
+                self, "Campo vacío", "Ingresa nombre o matrícula."
+            )
+            return
+
+        from data_access.insertar_datos_dao import (
+            actualizar_campo,
+            obtener_registro_por_campo,
+        )
+
+        alumno = obtener_registro_por_campo(
+            "alumnos", "matricula", criterio, connect_db
+        )
+
+        if alumno is None:
+            QtWidgets.QMessageBox.critical(
+                self, "No encontrado", "No se encontró al alumno."
+            )
+            return
+
+        if not alumno["activo"]:
+            QtWidgets.QMessageBox.information(
+                self, "Ya inactivo", "Este alumno ya está dado de baja."
+            )
+            return
+
+        confirmacion = QtWidgets.QMessageBox.question(
+            self,
+            "Confirmar baja",
+            f"¿Estás seguro de que deseas dar de baja a '{alumno['nombre']} {alumno['apellido_paterno']}'?",
+            QtWidgets.QMessageBox.StandardButton.Yes
+            | QtWidgets.QMessageBox.StandardButton.No,
+        )
+
+        if confirmacion == QtWidgets.QMessageBox.StandardButton.Yes:
+            exito = actualizar_campo(
+                tabla="alumnos",
+                campo_objetivo="activo",
+                nuevo_valor=False,
+                campo_condicion="matricula",
+                valor_condicion=criterio,
+                connect_func=connect_db,
+            )
+
+            if exito:
+                QtWidgets.QMessageBox.information(
+                    self, "Éxito", "Alumno dado de baja correctamente."
+                )
+                self.ui.input_buscar_baja.clear()
+            else:
+                QtWidgets.QMessageBox.critical(
+                    self, "Error", "No se pudo dar de baja al alumno."
+                )
+
+    # mostrar información de la baja
+    def mostrar_info_baja(self):
+        matricula = self.ui.combo_baja_alumno.currentData()
+        if not matricula:
+            self.ui.group_info_alumno.hide()
+            return
+
+        from data_access.insertar_datos_dao import obtener_registro_por_campo
+
+        alumno = obtener_registro_por_campo(
+            "alumnos", "matricula", matricula, connect_db
+        )
+
+        if alumno:
+            self.ui.label_info_matricula.setText(f"Matrícula: {alumno['matricula']}")
+            self.ui.label_info_nombre.setText(
+                f"Nombre: {alumno['nombre']} {alumno['apellido_paterno']} {alumno['apellido_materno']}"
+            )
+            self.ui.label_info_direccion.setText(f"Dirección: {alumno['direccion']}")
+            self.ui.label_info_correo.setText(f"Correo: {alumno['correo']}")
+            self.ui.group_info_alumno.show()
+        else:
+            self.ui.group_info_alumno.hide()
 
 
 if __name__ == "__main__":
