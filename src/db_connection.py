@@ -1,5 +1,7 @@
 import pymysql
 import bcrypt
+import subprocess
+
 
 HOST = "uamitos-db.cvskmasm6ar9.us-east-2.rds.amazonaws.com"
 USER = "admin"
@@ -10,6 +12,7 @@ PORT = 3306
 
 def connect_db():
     try:
+
         connection = pymysql.connect(
             host=HOST, user=USER, password=PASSWORD, database=DATABASE, port=PORT
         )
@@ -24,45 +27,35 @@ def connect_db():
 
 
 def login_validation(email, password):
+    connection = connect_db()
+    if not connection:
+        return "Error de conexión a la base de datos."
+
     try:
-        connection = connect_db()
-        cursor = connection.cursor()
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT contrasena FROM usuarios WHERE email = %s", (email,))
+            result = cursor.fetchone()
 
-        cursor.execute("SELECT contrasena FROM usuarios WHERE email = %s", (email,))
+            if not result:
+                return "El usuario no existe."
 
-        result = cursor.fetchone()
+            # Si el usuario existe, comparamos la contraseña
+            saved_hash = result[0].encode("utf-8")
+            if bcrypt.checkpw(password.encode("utf-8"), saved_hash):
 
-        if result:
-            saved_hash = result[0]
-            if bcrypt.checkpw(password.encode("utf-8"), saved_hash.encode("utf-8")):
-                print("Login exitoso...")
-                pass
+                return "OK"  # Login exitoso
             else:
-                print("Constraseña incorrecta...")
-        else:
-            print("Usuario no encontrado...")
-
-        cursor.close()
-        connection.close()
-
+                return "Contraseña incorrecta."
     except Exception as e:
         print(f"ERROR DE LOGIN {e}")
+        return "Error durante la validación."
+    finally:
+        connection.close()
 
 
-# def insertar_usuarios_iniciales():
+# Inserta usuarios temporales automáticamente al establecer la primera conexión
+# def insertar_usuarios_temporales():
 #     usuarios = [
-#         (
-#             "ADM01",
-#             "Admin",
-#             "General",
-#             "",
-#             "1990-01-01",
-#             "M",
-#             "5551112233",
-#             "admin@uamitos.edu.mx",
-#             "Dirección UAMITOS",
-#             "directivo",
-#         ),
 #         (
 #             "U001",
 #             "Alejandro",
@@ -73,7 +66,7 @@ def login_validation(email, password):
 #             "5551234567",
 #             "ale@mail.com",
 #             "CDMX",
-#             "directivo",
+#             "profesor",
 #         ),
 #         (
 #             "U002",
@@ -85,7 +78,19 @@ def login_validation(email, password):
 #             "5557654321",
 #             "gus@mail.com",
 #             "CDMX",
-#             "directivo",
+#             "profesor",
+#         ),
+#         (
+#             "U003",
+#             "Leonardo",
+#             "Vallejo",
+#             "O",
+#             "2000-01-03",
+#             "M",
+#             "5550001111",
+#             "leo@mail.com",
+#             "CDMX",
+#             "profesor",
 #         ),
 #     ]
 
@@ -93,7 +98,6 @@ def login_validation(email, password):
 #         connection = connect_db()
 #         cursor = connection.cursor()
 
-#         # Contraseña hash para todos ("1234")
 #         hashed_password = bcrypt.hashpw(
 #             "1234".encode("utf-8"), bcrypt.gensalt()
 #         ).decode("utf-8")
@@ -102,27 +106,17 @@ def login_validation(email, password):
 #             cursor.execute(
 #                 """
 #                 INSERT INTO usuarios (
-#                     numero_economico,
-#                     nombre,
-#                     apellido_paterno,
-#                     apellido_materno,
-#                     fecha_nacimiento,
-#                     sexo,
-#                     telefono,
-#                     email,
-#                     direccion,
-#                     rol,
-#                     contrasena,
-#                     activo
+#                     numero_economico, nombre, apellido_paterno, apellido_materno,
+#                     fecha_nacimiento, sexo, telefono, email, direccion,
+#                     rol, contrasena, activo
 #                 ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-#                 """,
+#             """,
 #                 (*u, hashed_password, True),
 #             )
 
 #         connection.commit()
 #         cursor.close()
 #         connection.close()
-#         print("✅ Usuarios iniciales insertados correctamente")
-
+#         print("✅ Usuarios temporales insertados correctamente")
 #     except Exception as e:
-#         print(f"❌ Error al insertar usuarios iniciales: {e}")
+#         print(f"❌ Error al insertar usuarios temporales: {e}")
