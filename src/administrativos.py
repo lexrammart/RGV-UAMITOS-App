@@ -533,6 +533,15 @@ class Ui_MainWindow(object):
         self.input_buscar_horario_m.setPlaceholderText(
             "Buscar por nombre o número económico"
         )
+
+        self.combo_horario_maestro = QtWidgets.QComboBox()
+        horario_m_layout.addWidget(self.combo_horario_maestro)
+
+        self.label_datos_maestro = QtWidgets.QLabel()
+        self.label_datos_maestro.setObjectName("label_datos_maestro")
+        self.label_datos_maestro.setStyleSheet("color: #444; margin: 4px;")
+        horario_m_layout.addWidget(self.label_datos_maestro)
+
         self.btn_generar_pdf_m = QtWidgets.QPushButton("Generar Horario en PDF")
         horario_m_layout.addWidget(QtWidgets.QLabel("Generar horario del maestro"))
         horario_m_layout.addWidget(self.input_buscar_horario_m)
@@ -1542,6 +1551,18 @@ class MainWindow(QMainWindow):
         super(MainWindow, self).__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+        for combo in self.findChildren(QtWidgets.QComboBox):
+            combo.setView(QtWidgets.QListView())  # 👈 fuerza vista Qt estándar
+            combo.setStyleSheet(
+                """
+                QComboBox QAbstractItemView {
+                    background-color: #f5f5f5;
+                    color: #202020;
+                    selection-background-color: #c62828;
+                    selection-color: white;
+                }
+            """
+            )
 
         # conexión cerrar sesión
         self.ui.btn_logout.clicked.connect(self.cerrar_sesion)
@@ -1722,6 +1743,14 @@ class MainWindow(QMainWindow):
 
         # Cargar lista inicial al abrir la vista
         self.actualizar_combo_update_materia()
+
+        self.ui.input_buscar_horario_m.textChanged.connect(
+            self.actualizar_combo_horario_maestro
+        )
+        self.ui.combo_horario_maestro.currentIndexChanged.connect(
+            self.mostrar_datos_maestro_pdf
+        )  # opcional si quieres mostrar algo
+        self.ui.btn_generar_pdf_m.clicked.connect(self.generar_horario_pdf_maestro)
 
     def cerrar_sesion(self):
         import subprocess
@@ -3267,6 +3296,148 @@ class MainWindow(QMainWindow):
             print("❌ Error al consultar materias del alumno:", e)
             QMessageBox.critical(
                 self, "Error", "Ocurrió un error al generar el horario."
+            )
+
+    def actualizar_combo_horario_maestro(self):
+        texto = self.ui.input_buscar_horario_m.text().strip().upper()
+        self.ui.combo_horario_maestro.clear()
+        try:
+            conexion = connect_db()
+            cursor = conexion.cursor()
+            query = """
+                SELECT id, CONCAT(nombre, ' ', apellido_paterno, ' ', apellido_materno)
+                FROM maestros
+                WHERE UPPER(nombre) LIKE %s OR UPPER(apellido_paterno) LIKE %s OR numero_economico LIKE %s
+            """
+            cursor.execute(query, (f"%{texto}%", f"%{texto}%", f"%{texto}%"))
+            resultados = cursor.fetchall()
+
+            for id_, nombre in resultados:
+                self.ui.combo_horario_maestro.addItem(nombre, id_)
+
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"No se pudo buscar maestros.\n{e}")
+
+    def generar_horario_pdf_maestro(self):
+        id_maestro = self.ui.combo_horario_maestro.currentData()
+        if id_maestro is None:
+            QMessageBox.warning(self, "Error", "Selecciona un maestro válido.")
+            return
+
+        try:
+            conexion = connect_db()
+            cursor = conexion.cursor()
+
+            # Obtener nombre completo del maestro
+            cursor.execute(
+                "SELECT nombre, apellido_paterno, apellido_materno FROM maestros WHERE id = %s",
+                (id_maestro,),
+            )
+            maestro = cursor.fetchone()
+            if not maestro:
+                QMessageBox.warning(self, "Error", "Maestro no encontrado.")
+                return
+
+            nombre_maestro = f"{maestro[0]} {maestro[1]} {maestro[2]}"
+
+            # Obtener materias y horarios
+            query = """
+                SELECT m.nombre, h.dia_semana, h.hora_inicio, h.hora_fin, s.id
+                FROM materias m
+                JOIN horarios_materias h ON m.clave = h.clave_materia
+                LEFT JOIN salones_materias sm ON sm.clave_materia = m.clave
+                LEFT JOIN salones s ON s.id = sm.id_salon
+                WHERE m.profesor_id = %s
+                ORDER BY FIELD(h.dia_semana, 'Lunes','Martes','Miércoles','Jueves','Viernes'), h.hora_inicio
+            """
+            cursor.execute(query, (id_maestro,))
+            materias = cursor.fetchall()
+
+            if not materias:
+                QMessageBox.information(
+                    self, "Sin datos", "Este maestro no tiene materias asignadas."
+                )
+                return
+
+            # Crear PDF en formato tabla
+            pdf = FPDF()
+            pdf.add_page()
+            pdf.set_font("Arial", "B", 14)
+            pdf.cell(0, 10, f"Horario de: {nombre_maestro}", ln=True, align="C")
+            pdf.ln(10)
+
+            # Encabezado
+            pdf.set_font("Arial", "B", 12)
+            pdf.set_fill_color(198, 40, 40)  # rojo UAM
+            pdf.set_text_color(255, 255, 255)
+            headers = ["Día", "Inicio", "Fin", "Materia", "Salón"]
+            col_widths = [30, 25, 25, 70, 30]
+            for i, header in enumerate(headers):
+                pdf.cell(col_widths[i], 10, header, border=1, align="C", fill=True)
+            pdf.ln()
+
+            # Filas
+            pdf.set_font("Arial", "", 11)
+            pdf.set_text_color(0, 0, 0)
+            for mat in materias:
+                nombre_m, dia, inicio, fin, salon = mat
+                salon_text = str(salon) if salon else "Sin asignar"
+                inicio_str = str(inicio)[:-3] if not isinstance(inicio, str) else inicio
+                fin_str = str(fin)[:-3] if not isinstance(fin, str) else fin
+                row = [dia, inicio_str, fin_str, nombre_m, salon_text]
+
+                for i, item in enumerate(row):
+                    pdf.cell(col_widths[i], 10, item, border=1, align="C")
+                pdf.ln()
+
+            # Guardar y abrir archivo
+            nombre_archivo = f"horario_maestro_{id_maestro}.pdf"
+            pdf.output(nombre_archivo)
+
+            import os
+
+            os.system(
+                f'open "{nombre_archivo}"'
+            )  # En Windows cambia a: start {nombre_archivo}
+
+            QMessageBox.information(
+                self, "PDF generado", f"Horario guardado como:\n{nombre_archivo}"
+            )
+
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"No se pudo generar el PDF.\n{e}")
+
+    def mostrar_datos_maestro_pdf(self):
+        id_maestro = self.ui.combo_horario_maestro.currentData()
+        if id_maestro is None:
+            self.ui.label_datos_maestro.setText("")
+            return
+
+        try:
+            conexion = connect_db()
+            cursor = conexion.cursor()
+            cursor.execute(
+                "SELECT nombre, apellido_paterno, apellido_materno, correo FROM maestros WHERE id = %s",
+                (id_maestro,),
+            )
+            maestro = cursor.fetchone()
+
+            if maestro is None or len(maestro) < 4:
+                self.ui.label_datos_maestro.setText(
+                    "❌ No se encontraron datos completos del maestro."
+                )
+                return
+
+            nombre_completo = f"{maestro[0]} {maestro[1]} {maestro[2]}"
+            correo = maestro[3]
+
+            self.ui.label_datos_maestro.setText(
+                f"<b>Nombre:</b> {nombre_completo}<br>" f"<b>Correo:</b> {correo}"
+            )
+
+        except Exception as e:
+            QMessageBox.warning(
+                self, "Error", f"No se pudo obtener datos del maestro.\n{e}"
             )
 
 

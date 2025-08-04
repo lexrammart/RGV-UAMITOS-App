@@ -188,3 +188,31 @@ QWidget#pagina_acercade QLabel {
 QWidget#pagina_acercade {
     background-color: #ffffff;
 }
+}
+
+/* Estilo general del QComboBox */
+QComboBox {
+    background-color: #f5f5f5;
+    color: #212121;
+    border: 1px solid #c62828;
+    border-radius: 4px;
+    padding: 5px;
+}
+
+/* Flechita del combo */
+QComboBox::drop-down {
+    background-color: #eeeeee;
+    width: 24px;
+    border-left: 1px solid #c62828;
+}
+
+/* Lista desplegable del combo */
+QComboBox QAbstractItemView {
+    background-color: #fdfdfd;               /* Fondo visible */
+    color: #212121;                          /* Texto legible */
+    selection-background-color: #c62828;     /* Rojo institucional al seleccionar */
+    selection-color: white;                  /* Texto seleccionado */
+    border: 1px solid #c62828;
+    padding: 4px;
+    outline: none;
+}

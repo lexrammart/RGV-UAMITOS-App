@@ -1640,6 +1640,19 @@ class MainWindow(QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
+        for combo in self.findChildren(QtWidgets.QComboBox):
+            combo.setView(QtWidgets.QListView())  # 👈 fuerza vista Qt estándar
+            combo.setStyleSheet(
+                """
+                QComboBox QAbstractItemView {
+                    background-color: #f5f5f5;
+                    color: #202020;
+                    selection-background-color: #c62828;
+                    selection-color: white;
+                }
+            """
+            )
+
         self.cargar_periodos_en_combo()
         # conexión cerrar sesión
         self.ui.btn_logout.clicked.connect(self.cerrar_sesion)
