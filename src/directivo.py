@@ -1,5 +1,11 @@
 from PySide6 import QtCore, QtGui, QtWidgets
-from PySide6.QtWidgets import QApplication, QMainWindow, QFileDialog
+from PySide6.QtWidgets import (
+    QApplication,
+    QMainWindow,
+    QFileDialog,
+    QMessageBox,
+    QTableWidgetItem,
+)
 from PySide6.QtGui import QActionGroup
 import sys
 import datetime
@@ -1016,7 +1022,7 @@ class Ui_MainWindow(object):
         form_alumnos = QtWidgets.QFormLayout(group_alumnos_periodo)
 
         self.combo_periodo_alumnos = QtWidgets.QComboBox()
-        self.combo_periodo_alumnos.addItems(["2025-A", "2025-B", "2026-A"])  # ejemplo
+        self.combo_periodo_alumnos.addItems(["2025-01", "2025-02"])  # ejemplo
 
         self.btn_generar_alumnos_periodo = QtWidgets.QPushButton("Generar Reporte")
 
@@ -1046,7 +1052,7 @@ class Ui_MainWindow(object):
         form_maestros = QtWidgets.QFormLayout(group_maestros_periodo)
 
         self.combo_periodo_maestros = QtWidgets.QComboBox()
-        self.combo_periodo_maestros.addItems(["2025-A", "2025-B", "2026-A"])
+        self.combo_periodo_maestros.addItems(["2025-01", "2025-02"])
 
         self.btn_generar_maestros_periodo = QtWidgets.QPushButton("Generar Reporte")
 
@@ -1076,7 +1082,7 @@ class Ui_MainWindow(object):
         form_materias = QtWidgets.QFormLayout(group_materias_periodo)
 
         self.combo_periodo_materias = QtWidgets.QComboBox()
-        self.combo_periodo_materias.addItems(["2025-A", "2025-B", "2026-A"])
+        self.combo_periodo_materias.addItems(["2025-01", "2025-02", "2026-01"])
 
         self.btn_generar_materias_periodo = QtWidgets.QPushButton("Generar Reporte")
 
@@ -1705,6 +1711,63 @@ class MainWindow(QMainWindow):
         self.ui.btn_guardar_vacaciones.clicked.connect(
             self.marcar_vacaciones
         )  # conexxión vacaciones
+
+        # conexiones materias
+        self.ui.btn_buscar_profesor.clicked.connect(self.buscar_profesores)
+        self.ui.btn_guardar_materia.clicked.connect(self.guardar_materia)
+        self.ui.input_buscar_lista_materias.textChanged.connect(self.buscar_materias)
+        self.ui.input_buscar_lista_materias.setText("")
+
+        # conexión editar materia
+        self.ui.btn_buscar_editar.clicked.connect(self.buscar_materias_para_editar)
+        self.ui.combo_editar_materia.currentIndexChanged.connect(
+            self.mostrar_datos_materia
+        )
+        self.ui.btn_guardar_cambios_materia.clicked.connect(
+            self.guardar_cambios_materia
+        )
+        self.ui.btn_cancelar_editar_materia.clicked.connect(
+            self.limpiar_formulario_editar_materia
+        )
+        self.ui.btn_buscar_profesor_editar.clicked.connect(
+            self.buscar_profesores_editar
+        )
+        self.ui.combo_profesor_editar.currentIndexChanged.connect(
+            self.procesar_profesor_seleccionado_editar
+        )
+
+        # conexión horario materia
+        self.cargar_materias_para_horario()
+        self.ui.btn_guardar_horario.clicked.connect(self.guardar_horario_materia)
+
+        # conexión salones
+        self.ui.btn_guardar_nuevo_salon.clicked.connect(self.guardar_nuevo_salon)
+        self.ui.btn_guardar_asignacion_salon.clicked.connect(self.asignar_salon)
+        self.ui.btn_buscar_materia_salon.clicked.connect(
+            self.buscar_materias_para_combo
+        )
+        self.ui.btn_buscar_salon.clicked.connect(self.buscar_salones_para_combo)
+        self.ui.btn_cancelar_nuevo_salon.clicked.connect(
+            self.limpiar_formulario_salones
+        )
+        self.ui.btn_cancelar_asignacion_salon.clicked.connect(
+            self.limpiar_formulario_salones
+        )
+
+        # conexión reporte
+        self.ui.btn_generar_alumnos_periodo.clicked.connect(
+            self.generar_reporte_alumnos_por_periodo
+        )
+        self.ui.btn_generar_maestros_periodo.clicked.connect(
+            self.generar_reporte_maestros_periodo
+        )
+        self.ui.btn_generar_reporte_usuarios.clicked.connect(
+            self.generar_reporte_usuarios
+        )
+
+        self.ui.btn_generar_materias_periodo.clicked.connect(
+            self.generar_reporte_materias_periodo
+        )
 
     # === Función para actualizar saludo dinámico ===
     def actualizar_bienvenida(self):
@@ -2367,6 +2430,634 @@ class MainWindow(QMainWindow):
             QtWidgets.QMessageBox.critical(
                 self, "Error", f"No se pudo guardar el periodo de vacaciones.\n{e}"
             )
+
+    # búsqueda de profesor:
+    def buscar_profesores(self):
+        texto = self.ui.input_buscar_profesor.text().strip().upper()
+        self.ui.combo_profesor.clear()
+
+        if not texto:
+            return
+
+        try:
+            conexion = connect_db()
+            cursor = conexion.cursor()
+            query = """
+                SELECT id, CONCAT(nombre, ' ', apellido_paterno, ' ', apellido_materno, ' - ', numero_economico)
+                FROM usuarios
+                WHERE rol = 'PROFESOR' AND (
+                    UPPER(nombre) LIKE %s OR
+                    UPPER(apellido_paterno) LIKE %s OR
+                    UPPER(numero_economico) LIKE %s
+                )
+            """
+            like_pattern = f"%{texto}%"
+            cursor.execute(query, (like_pattern, like_pattern, like_pattern))
+            resultados = cursor.fetchall()
+
+            for id_profesor, etiqueta in resultados:
+                self.ui.combo_profesor.addItem(etiqueta, id_profesor)
+
+            cursor.close()
+            conexion.close()
+        except Exception as e:
+            print("❌ Error buscando profesores:", e)
+
+    # guardar materia
+    def guardar_materia(self):
+        nombre = self.ui.input_nombre_materia.text().strip()
+        clave = self.ui.input_clave_materia.text().strip().upper()
+        creditos = self.ui.spin_creditos_materia.value()
+        cupo = self.ui.spin_cupo_materia.value()
+        profesor_id = self.ui.combo_profesor.currentData()
+
+        if not all([nombre, clave]) or profesor_id is None:
+            QtWidgets.QMessageBox.warning(
+                self, "Campos incompletos", "Por favor completa todos los campos."
+            )
+            return
+
+        try:
+            conexion = connect_db()
+            cursor = conexion.cursor()
+            query = """
+                INSERT INTO materias (clave, nombre, creditos, cupo_maximo, profesor_id)
+                VALUES (%s, %s, %s, %s, %s)
+            """
+            cursor.execute(query, (clave, nombre, creditos, cupo, profesor_id))
+            conexion.commit()
+            cursor.close()
+            conexion.close()
+
+            QtWidgets.QMessageBox.information(
+                self, "Éxito", "Materia guardada correctamente."
+            )
+            self.limpiar_campos_materia()
+
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(
+                self, "Error", f"No se pudo guardar la materia.\n{e}"
+            )
+
+    # limpiar
+    def limpiar_campos_materia(self):
+        self.ui.input_nombre_materia.clear()
+        self.ui.input_clave_materia.clear()
+        self.ui.spin_creditos_materia.setValue(1)
+        self.ui.spin_cupo_materia.setValue(1)
+        self.ui.input_buscar_profesor.clear()
+        self.ui.combo_profesor.clear()
+
+    # buscador materias
+    def buscar_materias(self):
+        texto = self.ui.input_buscar_lista_materias.text().strip().lower()
+
+        try:
+            conexion = connect_db()
+            cursor = conexion.cursor()
+
+            query = """
+                SELECT 
+                    m.clave,
+                    m.nombre,
+                    CONCAT(u.nombre, ' ', u.apellido_paterno) AS profesor,
+                    m.cupo_maximo
+                FROM materias m
+                LEFT JOIN usuarios u ON m.profesor_id = u.id
+                WHERE LOWER(m.clave) LIKE %s OR LOWER(m.nombre) LIKE %s
+            """
+            like_texto = f"%{texto}%"
+            cursor.execute(query, (like_texto, like_texto))
+            resultados = cursor.fetchall()
+
+            self.ui.tabla_materias.setRowCount(len(resultados))
+
+            for fila_idx, fila in enumerate(resultados):
+                for col_idx, dato in enumerate(fila):
+                    item = QtWidgets.QTableWidgetItem(str(dato))
+                    self.ui.tabla_materias.setItem(fila_idx, col_idx, item)
+
+            cursor.close()
+            conexion.close()
+
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(
+                self, "Error", f"No se pudieron buscar las materias.\n{e}"
+            )
+
+    # búsqueda edición de materias:
+    def buscar_materias_para_editar(self):
+        texto = self.ui.input_buscar_editar.text().strip().upper()
+        self.ui.combo_editar_materia.clear()
+        try:
+            conexion = connect_db()
+            cursor = conexion.cursor()
+            cursor.execute(
+                """
+                SELECT clave, nombre FROM materias
+                WHERE UPPER(clave) LIKE %s OR UPPER(nombre) LIKE %s
+            """,
+                (f"%{texto}%", f"%{texto}%"),
+            )
+            resultados = cursor.fetchall()
+            for clave, nombre in resultados:
+                self.ui.combo_editar_materia.addItem(f"{clave} - {nombre}", clave)
+        except Exception as e:
+            print("❌ Error al buscar materias:", e)
+        finally:
+            cursor.close()
+        conexion.close()
+
+    # llenado de formulario
+    def mostrar_datos_materia(self):
+        clave = self.ui.combo_editar_materia.currentData()
+        if not clave:
+            return
+        try:
+            conexion = connect_db()
+            cursor = conexion.cursor()
+            cursor.execute(
+                """
+                SELECT nombre, clave, creditos, cupo_maximo, profesor_id FROM materias WHERE clave = %s
+            """,
+                (clave,),
+            )
+            materia = cursor.fetchone()
+            if materia:
+                nombre, clave, creditos, cupo, profesor_id = materia
+                self.ui.input_nombre_editar.setPlaceholderText(nombre)
+                self.ui.input_clave_editar.setPlaceholderText(clave)
+                self.ui.spin_creditos_editar.setValue(creditos)
+                self.ui.spin_cupo_editar.setValue(cupo)
+                self.ui.combo_profesor_editar.clear()
+                if profesor_id:
+                    cursor.execute(
+                        "SELECT nombre, apellido_paterno FROM maestros WHERE id = %s",
+                        (profesor_id,),
+                    )
+                    prof = cursor.fetchone()
+                    if prof:
+                        self.ui.combo_profesor_editar.addItem(
+                            f"{prof[0]} {prof[1]}", profesor_id
+                        )
+        except Exception as e:
+            print("❌ Error al mostrar datos:", e)
+        finally:
+            cursor.close()
+            conexion.close()
+
+    # guardar cambios
+    def guardar_cambios_materia(self):
+        clave = self.ui.combo_editar_materia.currentData()
+        nuevo_nombre = self.ui.input_nombre_editar.text().strip()
+        nueva_clave = self.ui.input_clave_editar.text().strip()
+        creditos = self.ui.spin_creditos_editar.value()
+        cupo = self.ui.spin_cupo_editar.value()
+        profesor_id = self.ui.combo_profesor_editar.currentData()
+
+        if not clave:
+            return
+
+        try:
+            conexion = connect_db()
+            cursor = conexion.cursor()
+
+            query = "UPDATE materias SET "
+            campos = []
+            valores = []
+
+            if nuevo_nombre:
+                campos.append("nombre = %s")
+                valores.append(nuevo_nombre)
+            if nueva_clave:
+                campos.append("clave = %s")
+                valores.append(nueva_clave)
+
+            campos.append("creditos = %s")
+            campos.append("cupo_maximo = %s")
+            valores.extend([creditos, cupo])
+
+            if profesor_id:
+                campos.append("profesor_id = %s")
+                valores.append(profesor_id)
+
+            query += ", ".join(campos) + " WHERE clave = %s"
+            valores.append(clave)
+
+            cursor.execute(query, tuple(valores))
+            conexion.commit()
+            print("✅ Materia actualizada con éxito.")
+        except Exception as e:
+            print("❌ Error al actualizar materia:", e)
+        finally:
+            cursor.close()
+            conexion.close()
+
+    # limpiar form
+    def limpiar_formulario_editar_materia(self):
+        self.ui.input_nombre_editar.clear()
+        self.ui.input_clave_editar.clear()
+        self.ui.spin_creditos_editar.setValue(1)
+        self.ui.spin_cupo_editar.setValue(1)
+        self.ui.input_buscar_editar.clear()
+        self.ui.combo_editar_materia.clear()
+        self.ui.combo_profesor_editar.clear()
+
+    # buscar profesor
+    def buscar_profesores_editar(self):
+        texto = self.ui.input_buscar_profesor_editar.text().strip()
+
+        if not texto:
+            QtWidgets.QMessageBox.warning(
+                self, "Búsqueda vacía", "Ingresa un nombre o número económico."
+            )
+            return
+
+        try:
+            conexion = connect_db()
+            cursor = conexion.cursor()
+
+            query = """
+                SELECT id, numero_economico, nombre, apellido_paterno, apellido_materno
+                FROM maestros
+                WHERE numero_economico LIKE %s OR nombre LIKE %s OR apellido_paterno LIKE %s OR apellido_materno LIKE %s
+            """
+            valor = f"%{texto}%"
+            cursor.execute(query, (valor, valor, valor, valor))
+            resultados = cursor.fetchall()
+            cursor.close()
+            conexion.close()
+
+            self.ui.combo_profesor_editar.clear()
+
+            if not resultados:
+                self.ui.combo_profesor_editar.addItem("Sin resultados", -1)
+                return
+
+            for profesor in resultados:
+                id_profesor, num_econ, nombre, ap_pat, ap_mat = profesor
+                texto_visible = f"{num_econ} - {nombre} {ap_pat} {ap_mat}"
+                self.ui.combo_profesor_editar.addItem(texto_visible, id_profesor)
+
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(
+                self, "Error", f"No se pudo buscar profesores.\n{e}"
+            )
+
+    # selección maestro update materia
+    def procesar_profesor_seleccionado_editar(self):
+        index = self.ui.combo_profesor_editar.currentIndex()
+        if index == -1:
+            return
+
+        id_profesor = self.ui.combo_profesor_editar.currentData()
+        print(f"👨‍🏫 Profesor seleccionado para edición (ID): {id_profesor}")
+
+    # cargar materias prara horario
+    def cargar_materias_para_horario(self):
+        try:
+            conexion = connect_db()
+            cursor = conexion.cursor()
+            cursor.execute("SELECT clave, nombre FROM materias")
+            materias = cursor.fetchall()
+            conexion.close()
+
+            self.ui.combo_materia_horario.clear()
+            for clave, nombre in materias:
+                self.ui.combo_materia_horario.addItem(f"{clave} - {nombre}", clave)
+        except Exception as e:
+            print("❌ Error al cargar materias:", e)
+
+    def guardar_horario_materia(self):
+        clave = self.ui.combo_materia_horario.currentData()
+        dia = self.ui.combo_dia_semana.currentText()
+        hora_inicio = self.ui.time_inicio.time().toString("HH:mm:ss")
+        hora_fin = self.ui.time_fin.time().toString("HH:mm:ss")
+
+        if not clave:
+            QMessageBox.warning(
+                self,
+                "Materia no seleccionada",
+                "Selecciona una materia para continuar.",
+            )
+            return
+
+        if hora_inicio >= hora_fin:
+            QMessageBox.warning(
+                self,
+                "Horario inválido",
+                "La hora de inicio debe ser menor a la hora de fin.",
+            )
+            return
+
+        try:
+            conexion = connect_db()
+            cursor = conexion.cursor()
+
+            query = """
+                INSERT INTO horarios_materias (clave_materia, dia_semana, hora_inicio, hora_fin)
+                VALUES (%s, %s, %s, %s)
+            """
+            cursor.execute(query, (clave, dia, hora_inicio, hora_fin))
+            conexion.commit()
+            conexion.close()
+
+            QMessageBox.information(self, "Éxito", "✅ Horario asignado correctamente.")
+
+            # Opcional: resetear campos
+            self.ui.combo_materia_horario.setCurrentIndex(0)
+            self.ui.combo_dia_semana.setCurrentIndex(0)
+            self.ui.time_inicio.setTime(QtCore.QTime(0, 0))
+            self.ui.time_fin.setTime(QtCore.QTime(0, 0))
+
+        except Exception as e:
+            print("❌ Error al guardar horario:", e)
+            QMessageBox.critical(
+                self, "Error", f"No se pudo guardar el horario.\n\n{str(e)}"
+            )
+
+    # guardar nuevo salón
+    def guardar_nuevo_salon(self):
+        numero = self.ui.input_numero_salon_nuevo.text().strip()
+        capacidad = self.ui.input_capacidad_salon_nuevo.value()
+
+        if not numero:
+            QtWidgets.QMessageBox.warning(
+                self, "Campo vacío", "Ingrese un número de salón."
+            )
+            return
+
+        try:
+            conexion = connect_db()
+            cursor = conexion.cursor()
+            query = "INSERT INTO salones (numero_salon, capacidad) VALUES (%s, %s)"
+            cursor.execute(query, (numero, capacidad))
+            conexion.commit()
+            conexion.close()
+            QtWidgets.QMessageBox.information(
+                self, "Éxito", "Salón guardado correctamente."
+            )
+            self.ui.input_numero_salon_nuevo.clear()
+            self.ui.input_capacidad_salon_nuevo.setValue(1)
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(
+                self, "Error", f"No se pudo guardar el salón.\n{e}"
+            )
+
+    # asignar salón
+    def asignar_salon(self):
+        clave_materia = self.ui.combo_materia_salon.currentData()
+        id_salon = self.ui.combo_salon.currentData()
+
+        if not clave_materia or not id_salon:
+            QtWidgets.QMessageBox.warning(
+                self, "Faltan datos", "Seleccione una materia y un salón."
+            )
+            return
+
+        try:
+            conexion = connect_db()
+            cursor = conexion.cursor()
+            query = (
+                "INSERT INTO salones_materias (clave_materia, id_salon) VALUES (%s, %s)"
+            )
+            cursor.execute(query, (clave_materia, id_salon))
+            conexion.commit()
+            conexion.close()
+            QtWidgets.QMessageBox.information(
+                self, "Éxito", "Salón asignado correctamente."
+            )
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(
+                self, "Error", f"No se pudo asignar el salón.\n{e}"
+            )
+
+    # buscar materias combo
+    def buscar_materias_para_combo(self):
+        texto = self.ui.input_buscar_materia_salon.text().strip().upper()
+
+        try:
+            conexion = connect_db()
+            cursor = conexion.cursor()
+            query = """
+                SELECT clave, nombre
+                FROM materias
+                WHERE UPPER(clave) LIKE %s OR UPPER(nombre) LIKE %s
+            """
+            like_text = f"%{texto}%"
+            cursor.execute(query, (like_text, like_text))
+            resultados = cursor.fetchall()
+            conexion.close()
+
+            self.ui.combo_materia_salon.clear()
+            for clave, nombre in resultados:
+                self.ui.combo_materia_salon.addItem(f"{clave} - {nombre}", clave)
+
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(
+                self, "Error", f"No se pudieron cargar las materias.\n{e}"
+            )
+
+    # buscar salones combo
+    def buscar_salones_para_combo(self):
+        texto = self.ui.input_buscar_salon.text().strip().upper()
+
+        try:
+            conexion = connect_db()
+            cursor = conexion.cursor()
+            query = """
+                SELECT id, numero_salon
+                FROM salones
+                WHERE UPPER(numero_salon) LIKE %s
+            """
+            like_text = f"%{texto}%"
+            cursor.execute(query, (like_text,))
+            resultados = cursor.fetchall()
+            conexion.close()
+
+            self.ui.combo_salon.clear()
+            for id_salon, numero in resultados:
+                self.ui.combo_salon.addItem(f"Salón {numero}", id_salon)
+
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(
+                self, "Error", f"No se pudieron cargar los salones.\n{e}"
+            )
+
+    # limpiar form
+    def limpiar_formulario_salones(self):
+        # Crear nuevo salón
+        self.ui.input_numero_salon_nuevo.clear()
+        self.ui.input_capacidad_salon_nuevo.setValue(1)
+
+        # Buscar y asignar materia
+        self.ui.input_buscar_materia_salon.clear()
+        self.ui.combo_materia_salon.clear()
+
+        # Buscar y asignar salón
+        self.ui.input_buscar_salon.clear()
+        self.ui.combo_salon.clear()
+
+    # generar reporte
+    def generar_reporte_alumnos_por_periodo(self):
+        periodo = self.ui.combo_periodo_alumnos.currentText()
+
+        try:
+            conexion = connect_db()
+            cursor = conexion.cursor()
+            query = """
+                SELECT matricula, nombre, apellido_paterno, correo
+                FROM alumnos
+                WHERE periodo_ingreso = %s AND activo = TRUE
+            """
+            cursor.execute(query, (periodo,))
+            resultados = cursor.fetchall()
+            conexion.close()
+
+            self.ui.tabla_alumnos_periodo.setRowCount(len(resultados))
+            for row_idx, row_data in enumerate(resultados):
+                for col_idx, col_data in enumerate(row_data):
+                    item = QtWidgets.QTableWidgetItem(str(col_data))
+                    self.ui.tabla_alumnos_periodo.setItem(row_idx, col_idx, item)
+
+            print(
+                f"✅ Reporte generado: {len(resultados)} alumno(s) del periodo {periodo}"
+            )
+
+        except Exception as e:
+            print("❌ Error al generar reporte:", e)
+
+    # reporte maestros:
+    def generar_reporte_maestros_periodo(self):
+        periodo = self.ui.combo_periodo_maestros.currentText()
+        print("📊 Generando reporte para periodo:", periodo)
+
+        try:
+            conexion = connect_db()
+            cursor = conexion.cursor()
+
+            query = """
+                SELECT 
+                    m.numero_economico,
+                    CONCAT(m.nombre, ' ', m.apellido_paterno) AS nombre_maestro,
+                    GROUP_CONCAT(ma.nombre SEPARATOR ', ') AS materias_asignadas
+                FROM materias AS ma
+                JOIN maestros AS m ON ma.profesor_id = m.id
+                WHERE m.periodo = %s
+                GROUP BY m.id
+            """
+            cursor.execute(query, (periodo,))
+            resultados = cursor.fetchall()
+            conexion.close()
+
+            self.ui.tabla_maestros_periodo.setRowCount(0)
+            for fila, (num_economico, nombre, materias) in enumerate(resultados):
+                self.ui.tabla_maestros_periodo.insertRow(fila)
+                self.ui.tabla_maestros_periodo.setItem(
+                    fila, 0, QTableWidgetItem(str(num_economico))
+                )
+                self.ui.tabla_maestros_periodo.setItem(
+                    fila, 1, QTableWidgetItem(nombre)
+                )
+                self.ui.tabla_maestros_periodo.setItem(
+                    fila, 2, QTableWidgetItem(materias)
+                )
+
+            print("✅ Reporte generado")
+
+        except Exception as e:
+            print("❌ Error al generar el reporte:", e)
+
+    # generar reporte usuarios
+    def generar_reporte_usuarios(self):
+        print("🚨 El botón fue presionado correctamente")
+        print("📊 Generando reporte de todos los usuarios...")
+
+        try:
+            conexion = connect_db()
+            cursor = conexion.cursor()
+
+            query = """
+                SELECT numero_economico, nombre, apellido_paterno, apellido_materno, rol, email
+                FROM usuarios
+                WHERE activo = 1
+            """
+            cursor.execute(query)
+            resultados = cursor.fetchall()
+            conexion.close()
+
+            self.ui.tabla_reporte_usuarios.setRowCount(0)
+
+            for fila, (numero, nombre, paterno, materno, rol, correo) in enumerate(
+                resultados
+            ):
+                self.ui.tabla_reporte_usuarios.insertRow(fila)
+                self.ui.tabla_reporte_usuarios.setItem(
+                    fila, 0, QTableWidgetItem(str(numero))
+                )
+                self.ui.tabla_reporte_usuarios.setItem(
+                    fila, 1, QTableWidgetItem(nombre)
+                )
+                self.ui.tabla_reporte_usuarios.setItem(
+                    fila, 2, QTableWidgetItem(paterno)
+                )
+                self.ui.tabla_reporte_usuarios.setItem(
+                    fila, 3, QTableWidgetItem(materno)
+                )
+                self.ui.tabla_reporte_usuarios.setItem(fila, 4, QTableWidgetItem(rol))
+                self.ui.tabla_reporte_usuarios.setItem(
+                    fila, 5, QTableWidgetItem(correo)
+                )
+
+            print("✅ Reporte de usuarios generado correctamente")
+
+        except Exception as e:
+            print("❌ Error al generar el reporte de usuarios:", e)
+
+    # reporte materias
+    def generar_reporte_materias_periodo(self):
+        periodo = self.ui.combo_periodo_materias.currentText()
+        print("📊 Generando reporte de materias para periodo:", periodo)
+
+        try:
+            conexion = connect_db()
+            cursor = conexion.cursor()
+
+            query = """
+                SELECT 
+                    ma.clave,
+                    ma.nombre,
+                    CONCAT(m.nombre, ' ', m.apellido_paterno) AS profesor,
+                    ma.cupo_maximo
+                FROM materias AS ma
+                LEFT JOIN maestros AS m ON ma.profesor_id = m.id
+                WHERE ma.periodo = %s
+            """
+            cursor.execute(query, (periodo,))
+            resultados = cursor.fetchall()
+            conexion.close()
+
+            self.ui.tabla_materias_periodo.setRowCount(0)
+
+            for fila, (clave, nombre, profesor, cupo) in enumerate(resultados):
+                self.ui.tabla_materias_periodo.insertRow(fila)
+                self.ui.tabla_materias_periodo.setItem(
+                    fila, 0, QTableWidgetItem(str(clave))
+                )
+                self.ui.tabla_materias_periodo.setItem(
+                    fila, 1, QTableWidgetItem(nombre)
+                )
+                self.ui.tabla_materias_periodo.setItem(
+                    fila, 2, QTableWidgetItem(profesor if profesor else "—")
+                )
+                self.ui.tabla_materias_periodo.setItem(
+                    fila, 3, QTableWidgetItem(str(cupo))
+                )
+
+            print("✅ Reporte de materias generado correctamente")
+
+        except Exception as e:
+            print("❌ Error al generar el reporte de materias:", e)
 
 
 if __name__ == "__main__":
