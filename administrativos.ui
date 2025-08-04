@@ -1,0 +1,1104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1580</width>
+    <height>904</height>
+   </rect>
+  </property>
+  <property name="minimumSize">
+   <size>
+    <width>1580</width>
+    <height>904</height>
+   </size>
+  </property>
+  <property name="maximumSize">
+   <size>
+    <width>1580</width>
+    <height>904</height>
+   </size>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="contenedo_principal">
+   <layout class="QGridLayout" name="gridLayout">
+    <property name="leftMargin">
+     <number>0</number>
+    </property>
+    <property name="topMargin">
+     <number>0</number>
+    </property>
+    <property name="rightMargin">
+     <number>0</number>
+    </property>
+    <property name="bottomMargin">
+     <number>0</number>
+    </property>
+    <property name="spacing">
+     <number>0</number>
+    </property>
+    <item row="0" column="1">
+     <widget class="QWidget" name="contenedor_menu_completo" native="true">
+      <layout class="QVBoxLayout" name="verticalLayout_6">
+       <item>
+        <layout class="QHBoxLayout" name="logo_titulo">
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QLabel" name="logo_1">
+           <property name="minimumSize">
+            <size>
+             <width>50</width>
+             <height>40</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>50</width>
+             <height>40</height>
+            </size>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="pixmap">
+            <pixmap resource="recursos.qrc">:/prefijoNuevo/recursos/logoUamitos.png</pixmap>
+           </property>
+           <property name="scaledContents">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QLabel" name="titulo">
+           <property name="font">
+            <font>
+             <pointsize>15</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>UAMISys</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QVBoxLayout" name="verticalLayout_2">
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QPushButton" name="btn_inicio_texto">
+           <property name="text">
+            <string>Inicio</string>
+           </property>
+           <property name="icon">
+            <iconset resource="recursos.qrc">
+             <normaloff>:/prefijoNuevo/iconos/casa.png</normaloff>
+             <normalon>:/prefijoNuevo/iconos/casa-1.png</normalon>:/prefijoNuevo/iconos/casa.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>20</width>
+             <height>20</height>
+            </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="autoExclusive">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btn_alumnos_texto">
+           <property name="text">
+            <string>Alumnos</string>
+           </property>
+           <property name="icon">
+            <iconset resource="recursos.qrc">
+             <normaloff>:/prefijoNuevo/iconos/alumno-1.png</normaloff>
+             <normalon>:/prefijoNuevo/iconos/alumno.png</normalon>:/prefijoNuevo/iconos/alumno-1.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>20</width>
+             <height>20</height>
+            </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="autoExclusive">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btn_maestros_texto">
+           <property name="text">
+            <string>Maestros</string>
+           </property>
+           <property name="icon">
+            <iconset resource="recursos.qrc">
+             <normaloff>:/prefijoNuevo/iconos/maestro-2.png</normaloff>
+             <normalon>:/prefijoNuevo/iconos/maestro.png</normalon>:/prefijoNuevo/iconos/maestro-2.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>20</width>
+             <height>20</height>
+            </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="autoExclusive">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btn_materias_texto">
+           <property name="text">
+            <string>Materias</string>
+           </property>
+           <property name="icon">
+            <iconset resource="recursos.qrc">
+             <normaloff>:/prefijoNuevo/iconos/libros.png</normaloff>
+             <normalon>:/prefijoNuevo/iconos/libros-2.png</normalon>:/prefijoNuevo/iconos/libros.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>20</width>
+             <height>20</height>
+            </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="autoExclusive">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btndocumentos_texto">
+           <property name="text">
+            <string>Documentos</string>
+           </property>
+           <property name="icon">
+            <iconset resource="recursos.qrc">
+             <normaloff>:/prefijoNuevo/iconos/abrir-documento-1.png</normaloff>
+             <normalon>:/prefijoNuevo/iconos/abrir-documento.png</normalon>:/prefijoNuevo/iconos/abrir-documento-1.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>20</width>
+             <height>20</height>
+            </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="autoExclusive">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btn_reportes_texto">
+           <property name="text">
+            <string>Reportes</string>
+           </property>
+           <property name="icon">
+            <iconset resource="recursos.qrc">
+             <normaloff>:/prefijoNuevo/iconos/analitica.png</normaloff>
+             <normalon>:/prefijoNuevo/iconos/analitica-2.png</normalon>:/prefijoNuevo/iconos/analitica.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>20</width>
+             <height>20</height>
+            </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="autoExclusive">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <spacer name="verticalSpacer_2">
+         <property name="orientation">
+          <enum>Qt::Orientation::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>611</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <layout class="QVBoxLayout" name="verticalLayout_5">
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QPushButton" name="btn_logout_texto">
+           <property name="text">
+            <string>Acerca dé</string>
+           </property>
+           <property name="icon">
+            <iconset resource="recursos.qrc">
+             <normaloff>:/prefijoNuevo/iconos/acerca-de-1.png</normaloff>
+             <normalon>:/prefijoNuevo/iconos/acerca-de.png</normalon>:/prefijoNuevo/iconos/acerca-de-1.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>20</width>
+             <height>20</height>
+            </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="autoExclusive">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btn_acercade_texto">
+           <property name="text">
+            <string>Cerrar sesión</string>
+           </property>
+           <property name="icon">
+            <iconset resource="recursos.qrc">
+             <normaloff>:/prefijoNuevo/iconos/cerrar-sesion-2.png</normaloff>
+             <normalon>:/prefijoNuevo/iconos/cerrar-sesion.png</normalon>:/prefijoNuevo/iconos/cerrar-sesion-2.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>20</width>
+             <height>20</height>
+            </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="autoExclusive">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item row="0" column="2">
+     <widget class="QWidget" name="contenedor_secundario" native="true">
+      <layout class="QVBoxLayout" name="verticalLayout_7">
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <item>
+        <widget class="QWidget" name="widget" native="true">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>45</height>
+          </size>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout_4">
+          <property name="spacing">
+           <number>0</number>
+          </property>
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>6</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QPushButton" name="btn_menu">
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset resource="recursos.qrc">
+              <normaloff>:/prefijoNuevo/iconos/lista.png</normaloff>
+              <normalon>:/prefijoNuevo/iconos/lista.png</normalon>:/prefijoNuevo/iconos/lista.png</iconset>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>20</width>
+              <height>20</height>
+             </size>
+            </property>
+            <property name="checkable">
+             <bool>true</bool>
+            </property>
+            <property name="autoExclusive">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer">
+            <property name="orientation">
+             <enum>Qt::Orientation::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>422</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout">
+            <item>
+             <widget class="QLineEdit" name="input_buscar">
+              <property name="placeholderText">
+               <string>Buscar</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QPushButton" name="btn_buscar">
+              <property name="text">
+               <string/>
+              </property>
+              <property name="icon">
+               <iconset resource="recursos.qrc">
+                <normaloff>:/prefijoNuevo/iconos/buscar.png</normaloff>:/prefijoNuevo/iconos/buscar.png</iconset>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_2">
+            <property name="orientation">
+             <enum>Qt::Orientation::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>422</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QPushButton" name="btn_user">
+            <property name="text">
+             <string/>
+            </property>
+            <property name="icon">
+             <iconset resource="recursos.qrc">
+              <normaloff>:/prefijoNuevo/iconos/usuario.png</normaloff>:/prefijoNuevo/iconos/usuario.png</iconset>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>20</width>
+              <height>20</height>
+             </size>
+            </property>
+            <property name="checkable">
+             <bool>true</bool>
+            </property>
+            <property name="autoExclusive">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item>
+        <widget class="QStackedWidget" name="contendor_contenido">
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>0</height>
+          </size>
+         </property>
+         <property name="currentIndex">
+          <number>0</number>
+         </property>
+         <widget class="QWidget" name="pagina_bienvenida"/>
+         <widget class="QWidget" name="pagina_maestros"/>
+         <widget class="QWidget" name="pagina_materias"/>
+         <widget class="QWidget" name="pagina_documentos"/>
+         <widget class="QWidget" name="page_reportes"/>
+         <widget class="QWidget" name="pagina_alumnos"/>
+         <widget class="QWidget" name="page_acercade"/>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
+    <item row="0" column="0">
+     <widget class="QWidget" name="contenedor_menu_iconos" native="true">
+      <property name="maximumSize">
+       <size>
+        <width>75</width>
+        <height>16777215</height>
+       </size>
+      </property>
+      <layout class="QVBoxLayout" name="verticalLayout_4">
+       <property name="spacing">
+        <number>0</number>
+       </property>
+       <property name="leftMargin">
+        <number>0</number>
+       </property>
+       <property name="topMargin">
+        <number>0</number>
+       </property>
+       <property name="rightMargin">
+        <number>0</number>
+       </property>
+       <property name="bottomMargin">
+        <number>0</number>
+       </property>
+       <item>
+        <layout class="QHBoxLayout" name="logo_layout">
+         <item>
+          <spacer name="horizontalSpacer_4">
+           <property name="orientation">
+            <enum>Qt::Orientation::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QLabel" name="logo">
+           <property name="minimumSize">
+            <size>
+             <width>60</width>
+             <height>50</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>70</width>
+             <height>50</height>
+            </size>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="pixmap">
+            <pixmap resource="recursos.qrc">:/recursos/recursos/logoUamitos.png</pixmap>
+           </property>
+           <property name="scaledContents">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer_3">
+           <property name="orientation">
+            <enum>Qt::Orientation::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <layout class="QVBoxLayout" name="verticalLayout">
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QPushButton" name="btn_inicio">
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="recursos.qrc">
+             <normaloff>:/recursos/iconos/casa.png</normaloff>
+             <normalon>:/recursos/iconos/casa-1.png</normalon>:/recursos/iconos/casa.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>26</width>
+             <height>26</height>
+            </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="autoExclusive">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btn_alumnos">
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="recursos.qrc">
+             <normaloff>:/prefijoNuevo/iconos/alumno-1.png</normaloff>
+             <normalon>:/prefijoNuevo/iconos/alumno.png</normalon>:/prefijoNuevo/iconos/alumno-1.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>26</width>
+             <height>26</height>
+            </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="autoExclusive">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btn_maestros">
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="recursos.qrc">
+             <normaloff>:/prefijoNuevo/iconos/maestro-2.png</normaloff>
+             <normalon>:/prefijoNuevo/iconos/maestro.png</normalon>:/prefijoNuevo/iconos/maestro-2.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>26</width>
+             <height>26</height>
+            </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="autoExclusive">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btn_materias">
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="recursos.qrc">
+             <normaloff>:/prefijoNuevo/iconos/libros.png</normaloff>
+             <normalon>:/prefijoNuevo/iconos/libros-2.png</normalon>:/prefijoNuevo/iconos/libros.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>26</width>
+             <height>26</height>
+            </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="autoExclusive">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btn_documentos">
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="recursos.qrc">
+             <normaloff>:/prefijoNuevo/iconos/abrir-documento-1.png</normaloff>
+             <normalon>:/prefijoNuevo/iconos/abrir-documento.png</normalon>:/prefijoNuevo/iconos/abrir-documento-1.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>26</width>
+             <height>26</height>
+            </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="autoExclusive">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btn_reportes">
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="recursos.qrc">
+             <normaloff>:/prefijoNuevo/iconos/analitica.png</normaloff>
+             <normalon>:/prefijoNuevo/iconos/analitica-2.png</normalon>:/prefijoNuevo/iconos/analitica.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>26</width>
+             <height>26</height>
+            </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="autoExclusive">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+       <item>
+        <spacer name="verticalSpacer">
+         <property name="orientation">
+          <enum>Qt::Orientation::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>589</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item>
+        <layout class="QVBoxLayout" name="verticalLayout_3">
+         <property name="spacing">
+          <number>0</number>
+         </property>
+         <item>
+          <widget class="QPushButton" name="btn_acercade">
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="recursos.qrc">
+             <normaloff>:/prefijoNuevo/iconos/acerca-de-1.png</normaloff>
+             <normalon>:/prefijoNuevo/iconos/acerca-de.png</normalon>
+             <disabledon>:/prefijoNuevo/iconos/acerca-de.png</disabledon>:/prefijoNuevo/iconos/acerca-de-1.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>26</width>
+             <height>26</height>
+            </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="autoExclusive">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btn_logout">
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="recursos.qrc">
+             <normaloff>:/prefijoNuevo/iconos/cerrar-sesion-2.png</normaloff>
+             <normalon>:/prefijoNuevo/iconos/cerrar-sesion.png</normalon>:/prefijoNuevo/iconos/cerrar-sesion-2.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>26</width>
+             <height>26</height>
+            </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="autoExclusive">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </item>
+      </layout>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+ </widget>
+ <resources>
+  <include location="recursos.qrc"/>
+ </resources>
+ <connections>
+  <connection>
+   <sender>btn_menu</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>contenedor_menu_iconos</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>253</x>
+     <y>18</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>27</x>
+     <y>410</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>btn_menu</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>contenedor_menu_completo</receiver>
+   <slot>setHidden(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>231</x>
+     <y>29</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>200</x>
+     <y>497</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>btn_inicio</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>btn_inicio_texto</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>51</x>
+     <y>62</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>122</x>
+     <y>66</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>btn_alumnos</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>btn_alumnos_texto</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>58</x>
+     <y>97</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>102</x>
+     <y>96</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>btn_maestros</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>btn_maestros_texto</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>48</x>
+     <y>127</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>117</x>
+     <y>119</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>btn_materias</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>btn_materias_texto</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>57</x>
+     <y>167</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>100</x>
+     <y>148</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>btn_documentos</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>btndocumentos_texto</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>29</x>
+     <y>194</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>115</x>
+     <y>172</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>btn_reportes</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>btn_reportes_texto</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>39</x>
+     <y>237</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>118</x>
+     <y>208</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>btn_inicio_texto</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>btn_inicio</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>114</x>
+     <y>72</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>58</x>
+     <y>74</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>btn_alumnos_texto</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>btn_alumnos</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>189</x>
+     <y>97</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>66</x>
+     <y>95</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>btn_maestros_texto</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>btn_maestros</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>198</x>
+     <y>126</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>46</x>
+     <y>136</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>btn_materias_texto</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>btn_materias</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>192</x>
+     <y>151</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>46</x>
+     <y>162</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>btndocumentos_texto</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>btn_documentos</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>195</x>
+     <y>170</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>58</x>
+     <y>193</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>btn_reportes_texto</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>btn_reportes</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>204</x>
+     <y>201</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>38</x>
+     <y>236</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>btn_acercade</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>btn_logout_texto</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>50</x>
+     <y>853</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>117</x>
+     <y>849</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>btn_logout_texto</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>btn_acercade</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>119</x>
+     <y>855</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>44</x>
+     <y>857</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>btn_acercade_texto</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>btn_logout</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>111</x>
+     <y>882</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>56</x>
+     <y>887</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>btn_logout</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>btn_acercade_texto</receiver>
+   <slot>setChecked(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>45</x>
+     <y>886</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>166</x>
+     <y>878</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>btn_acercade_texto</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>close()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>195</x>
+     <y>875</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>441</x>
+     <y>-13</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>btn_logout</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>close()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>47</x>
+     <y>898</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>423</x>
+     <y>-1</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

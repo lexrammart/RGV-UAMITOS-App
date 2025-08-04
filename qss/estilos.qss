@@ -1,0 +1,195 @@
+/* === Ventana Principal === */
+QMainWindow {
+    background-color: #ffffff;
+    font-family: 'Segoe UI';
+    font-size: 14px;
+    color: #2c2c2c;
+}
+
+/* === Sidebar completo (menu expandido) === */
+QWidget#contenedor_menu_completo {
+    background-color: #c62828;
+    color: #ffffff;
+    border-top-right-radius: 20px;
+    border-bottom-right-radius: 20px;
+}
+
+/* ✅ Texto del logo blanco */
+QWidget#contenedor_menu_completo QLabel#titulo {
+    color: #ffffff;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+/* === Sidebar pequeño (solo iconos) === */
+QWidget#contenedor_menu_iconos {
+    background-color: #b71c1c;
+    border-top-right-radius: 15px;
+    border-bottom-right-radius: 15px;
+}
+
+/* === Botones del menu completo === */
+QWidget#contenedor_menu_completo QPushButton {
+    background-color: transparent;
+    color: #ffffff;
+    border: none;
+    padding: 10px;
+    text-align: left;
+    font-weight: 500;
+    border-radius: 8px;
+}
+
+QWidget#contenedor_menu_completo QPushButton:checked {
+    background-color: #ffffff;
+    color: #c62828;
+    font-weight: bold;
+}
+
+QWidget#contenedor_menu_completo QPushButton:hover {
+    background-color: #ef5350;
+}
+
+/* === Botones del menu pequeño === */
+QWidget#contenedor_menu_iconos QPushButton {
+    background-color: transparent;
+    color: #ffffff;
+    border: none;
+    padding: 12px;
+    font-weight: 500;
+    text-align: center;
+    qproperty-iconSize: 28px;
+    border-radius: 8px;
+}
+
+QWidget#contenedor_menu_iconos QPushButton:checked {
+    background-color: #ffffff;
+    color: #c62828;
+}
+
+QWidget#contenedor_menu_iconos QPushButton:hover {
+    background-color: #ef5350;
+}
+
+/* === Botón que contrae/despliega el menú === */
+QPushButton#btn_menu {
+    background-color: #ffffff;
+    border-radius: 8px;
+}
+
+QPushButton#btn_menu:hover {
+    background-color: #f5f5f5;
+}
+
+/* === ToolBar === */
+QToolBar {
+    background-color: #ffffff;
+    padding: 4px;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+}
+
+/* === Botones de la ToolBar === */
+QToolButton {
+    background-color: transparent;
+    padding: 6px;
+    margin: 2px;
+    border-radius: 6px;
+    color: #c62828;
+    font-weight: 500;
+}
+
+/* Hover suave */
+QToolButton:hover {
+    background-color: #fde0e0;
+}
+
+/* 🔹 Estado activo (cuando está presionado/seleccionado) */
+QToolButton:checked {
+    background-color: #c62828;
+    color: white;
+    font-weight: bold;
+}
+
+/* === Páginas y QStackedWidget === */
+QStackedWidget, QWidget#pagina_alumnos, QWidget#pagina_maestros, QWidget#pagina_materias,
+QWidget#pagina_documentos, QWidget#pagina_reportes, QWidget#pagina_acercade {
+    background-color: #fafafa;
+    border-radius: 10px;
+    padding: 8px;
+}
+
+/* === GroupBox === */
+QGroupBox {
+    border: 2px solid #9e9e9e;
+    border-radius: 8px;
+    margin-top: 10px;
+    background: white;
+}
+
+QGroupBox::title {
+    subcontrol-origin: margin;
+    subcontrol-position: top center;
+    padding: 5px;
+    font-weight: bold;
+    color: #2c2c2c;
+}
+
+/* === Formularios === */
+QLineEdit, QComboBox, QDateEdit, QPlainTextEdit {
+    border: 1px solid #9e9e9e;
+    border-radius: 6px;
+    padding: 6px;
+    background-color: white;
+}
+
+QLineEdit:focus, QComboBox:focus, QDateEdit:focus, QPlainTextEdit:focus {
+    border: 2px solid #c62828;
+    background-color: #fffdfd;
+}
+
+/* === Botones de acción === */
+QPushButton {
+    background-color: #c62828;
+    color: white;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-weight: 500;
+}
+
+QPushButton:hover {
+    background-color: #b71c1c;
+}
+
+QPushButton:pressed {
+    background-color: #8e0000;
+}
+
+/* === Botones secundarios (cancelar) === */
+QPushButton#btn_cancelar_alta,
+QPushButton#btn_cancelar_update {
+    background-color: #6c757d;
+}
+
+QPushButton#btn_cancelar_alta:hover,
+QPushButton#btn_cancelar_update:hover {
+    background-color: #5a6268;
+}
+
+/* === Etiquetas y CheckBox === */
+QLabel, QCheckBox {
+    color: #2c2c2c;
+}
+
+/* === Página Acerca de === */
+QWidget#pagina_acercade QLabel {
+    color: #2c2c2c;
+}
+
+QWidget#pagina_acercade {
+    background-color: #ffffff;
+}
+
+
+QLineEdit::placeholder {
+    color: #bbb; /* O el color tenue que prefieras */
+}

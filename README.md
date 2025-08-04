@@ -1,7 +1,7 @@
 <table border="0" style="border: none;">
   <tr>
     <td width="200">
-      <img src="assets/logo-rgv-innovations.png" alt="Logo de RGV Innovations" width="180"/>
+      <img src="recursos/RGV_Innovations.png" alt="Logo de RGV Innovations" width="180"/>
     </td>
     <td>
       <h1>📚 RGV-UAMITOS-App</h1>
