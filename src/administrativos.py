@@ -424,6 +424,42 @@ class Ui_MainWindow(object):
             "Buscar por nombre o número económico"
         )
         self.combo_baja_maestro = QtWidgets.QComboBox()
+
+        # Mostrar información del maestro seleccionado
+        self.group_info_baja_maestro = QtWidgets.QGroupBox(
+            "Datos del Maestro Seleccionado"
+        )
+        self.layout_info_baja_maestro = QtWidgets.QFormLayout(
+            self.group_info_baja_maestro
+        )
+
+        self.label_nombre_baja_m = QtWidgets.QLabel()
+        self.label_apellido_p_baja_m = QtWidgets.QLabel()
+        self.label_apellido_m_baja_m = QtWidgets.QLabel()
+        self.label_fecha_nac_baja_m = QtWidgets.QLabel()
+        self.label_direccion_baja_m = QtWidgets.QLabel()
+        self.label_correo_baja_m = QtWidgets.QLabel()
+        self.label_num_econ_baja_m = QtWidgets.QLabel()
+
+        self.layout_info_baja_maestro.addRow("Nombre:", self.label_nombre_baja_m)
+        self.layout_info_baja_maestro.addRow(
+            "Apellido Paterno:", self.label_apellido_p_baja_m
+        )
+        self.layout_info_baja_maestro.addRow(
+            "Apellido Materno:", self.label_apellido_m_baja_m
+        )
+        self.layout_info_baja_maestro.addRow(
+            "Fecha de Nacimiento:", self.label_fecha_nac_baja_m
+        )
+        self.layout_info_baja_maestro.addRow("Dirección:", self.label_direccion_baja_m)
+        self.layout_info_baja_maestro.addRow("Correo:", self.label_correo_baja_m)
+        self.layout_info_baja_maestro.addRow(
+            "Número Económico:", self.label_num_econ_baja_m
+        )
+
+        # Lo insertas en el layout visual entre el combo y el botón
+        baja_m_layout.addWidget(self.group_info_baja_maestro)
+
         self.btn_baja_maestro = QtWidgets.QPushButton("Dar de Baja")
         baja_m_layout.addWidget(QtWidgets.QLabel("Buscar Maestro:"))
         baja_m_layout.addWidget(self.input_buscar_baja_m)
@@ -477,6 +513,7 @@ class Ui_MainWindow(object):
         update_m_layout.addWidget(group_update_m)
         update_m_layout.addLayout(btn_layout_update_m)
         self.stack_maestros.addWidget(self.page_actualizar_maestro)
+        self.datos_actuales_update_m = None
 
         # ===============================
         # 🚀 Imprimir Horario de Maestros
@@ -1523,6 +1560,52 @@ class MainWindow(QMainWindow):
         self.ui.btn_guardar_update.clicked.connect(self.guardar_cambios_update)
         self.ui.btn_cancelar_update.clicked.connect(self.limpiar_formulario_update)
 
+        ##### conexiones para maestro
+        self.ui.btn_guardar_m_alta.clicked.connect(self.dar_alta_maestro)
+        self.ui.btn_cancelar_m_alta.clicked.connect(self.limpiar_campos_alta_maestro)
+
+        self.ui.input_buscar_baja_m.textChanged.connect(
+            self.actualizar_combo_baja_maestro
+        )
+        self.ui.combo_baja_maestro.currentIndexChanged.connect(
+            self.mostrar_info_baja_maestro
+        )
+        self.ui.btn_baja_maestro.clicked.connect(self.dar_baja_maestro)
+
+        self.ui.combo_baja_maestro.currentIndexChanged.connect(
+            self.mostrar_info_baja_maestro
+        )
+
+        self.ui.input_buscar_update_m.textChanged.connect(
+            self.actualizar_combo_update_maestro
+        )
+        self.ui.combo_update_maestro.currentIndexChanged.connect(
+            self.mostrar_info_update_maestro
+        )
+
+        self.ui.input_nombre_update_m.returnPressed.connect(
+            self.autocompletar_campo_update_maestro
+        )
+        self.ui.input_ap_paterno_update_m.returnPressed.connect(
+            self.autocompletar_campo_update_maestro
+        )
+        self.ui.input_ap_materno_update_m.returnPressed.connect(
+            self.autocompletar_campo_update_maestro
+        )
+        self.ui.input_direccion_update_m.returnPressed.connect(
+            self.autocompletar_campo_update_maestro
+        )
+        self.ui.input_correo_update_m.returnPressed.connect(
+            self.autocompletar_campo_update_maestro
+        )
+
+        self.ui.btn_guardar_update_m.clicked.connect(
+            self.guardar_cambios_update_maestro
+        )
+        self.ui.btn_cancelar_update_m.clicked.connect(
+            self.limpiar_formulario_update_maestro
+        )
+
     def cerrar_sesion(self):
         import subprocess
         import sys
@@ -2005,6 +2088,343 @@ class MainWindow(QMainWindow):
         self.ui.check_activo_update.setChecked(True)
 
         self.datos_actuales_update = {}
+
+    # dar de alta maestro
+    def dar_alta_maestro(self):
+        from data_access.insertar_datos_dao import insertar_registro
+
+        nombre = self.ui.input_nombre_m_alta.text().strip().upper()
+        apellido_paterno = self.ui.input_ap_paterno_m_alta.text().strip().upper()
+        apellido_materno = self.ui.input_ap_materno_m_alta.text().strip().upper()
+        fecha_nac = self.ui.input_fecha_nac_m_alta.date().toString("yyyy-MM-dd")
+        direccion = self.ui.input_direccion_m_alta.text().strip().upper()
+        correo = self.ui.input_correo_m_alta.text().strip().lower()
+        numero_economico = self.ui.input_numero_economico_m_alta.text().strip().upper()
+        activo = self.ui.check_activo_m_alta.isChecked()
+
+        # Validación: asegurarse que todos los campos estén llenos
+        if not all(
+            [
+                nombre,
+                apellido_paterno,
+                apellido_materno,
+                fecha_nac,
+                direccion,
+                correo,
+                numero_economico,
+            ]
+        ):
+            QtWidgets.QMessageBox.warning(
+                self,
+                "Campos incompletos",
+                "Por favor, completa todos los campos antes de continuar.",
+            )
+            return
+
+        datos = {
+            "numero_economico": numero_economico,
+            "nombre": nombre,
+            "apellido_paterno": apellido_paterno,
+            "apellido_materno": apellido_materno,
+            "fecha_nacimiento": fecha_nac,
+            "direccion": direccion,
+            "correo": correo,
+            "activo": activo,
+        }
+
+        exito = insertar_registro("maestros", datos, connect_db)
+
+        if exito:
+            QtWidgets.QMessageBox.information(
+                self, "Éxito", "Maestro registrado correctamente."
+            )
+            self.limpiar_campos_alta_maestro()
+        else:
+            QtWidgets.QMessageBox.critical(
+                self, "Error", "No se pudo registrar al maestro."
+            )
+
+    def limpiar_campos_alta_maestro(self):
+        self.ui.input_nombre_m_alta.clear()
+        self.ui.input_ap_paterno_m_alta.clear()
+        self.ui.input_ap_materno_m_alta.clear()
+        self.ui.input_fecha_nac_m_alta.setDate(QtCore.QDate.currentDate())
+        self.ui.input_direccion_m_alta.clear()
+        self.ui.input_correo_m_alta.clear()
+        self.ui.input_numero_economico_m_alta.clear()
+        self.ui.check_activo_m_alta.setChecked(False)
+
+    # actualiza combo baja maestro
+    def actualizar_combo_baja_maestro(self):
+        texto = self.ui.input_buscar_baja_m.text().strip().upper()
+
+        if not texto:
+            self.ui.combo_baja_maestro.clear()
+            return
+
+        try:
+            conexion = connect_db()
+            cursor = conexion.cursor()
+            query = """
+                SELECT numero_economico, nombre, apellido_paterno, apellido_materno
+                FROM maestros
+                WHERE activo = TRUE AND (
+                    numero_economico LIKE %s OR
+                    nombre LIKE %s OR
+                    apellido_paterno LIKE %s OR
+                    apellido_materno LIKE %s
+                )
+            """
+            valores = (f"%{texto}%",) * 4
+            cursor.execute(query, valores)
+            resultados = cursor.fetchall()
+            cursor.close()
+            conexion.close()
+
+            self.ui.combo_baja_maestro.clear()
+            for maestro in resultados:
+                numero = maestro[0]
+                nombre = maestro[1]
+                ap_pat = maestro[2]
+                ap_mat = maestro[3]
+                etiqueta = f"{numero} - {nombre} {ap_pat} {ap_mat}"
+                self.ui.combo_baja_maestro.addItem(etiqueta, numero)
+
+        except Exception as e:
+            print("❌ Error al buscar maestros:", e)
+
+    # info de la baja
+    def mostrar_info_baja_maestro(self):
+        numero_economico = self.ui.combo_baja_maestro.currentData()
+        if not numero_economico:
+            self.group_info_baja_maestro.hide()
+            return
+
+        from data_access.insertar_datos_dao import obtener_registro_por_campo
+
+        maestro = obtener_registro_por_campo(
+            "maestros", "numero_economico", numero_economico, connect_db
+        )
+
+        if maestro:
+            self.ui.label_nombre_baja_m.setText(maestro["nombre"])
+            self.ui.label_apellido_p_baja_m.setText(maestro["apellido_paterno"])
+            self.ui.label_apellido_m_baja_m.setText(maestro["apellido_materno"])
+            self.ui.label_fecha_nac_baja_m.setText(str(maestro["fecha_nacimiento"]))
+            self.ui.label_direccion_baja_m.setText(maestro["direccion"])
+            self.ui.label_correo_baja_m.setText(maestro["correo"])
+            self.ui.label_num_econ_baja_m.setText(maestro["numero_economico"])
+            self.ui.group_info_baja_maestro.show()
+        else:
+            self.ui.group_info_baja_maestro.hide()
+
+    # dar de baja maestro
+    def dar_baja_maestro(self):
+        numero = self.ui.combo_baja_maestro.currentData()
+        if not numero:
+            QtWidgets.QMessageBox.warning(
+                self, "Error", "Selecciona un maestro para dar de baja."
+            )
+            return
+
+        confirmar = QtWidgets.QMessageBox.question(
+            self,
+            "Confirmar",
+            f"¿Estás seguro de que deseas dar de baja al maestro con número {numero}?",
+            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+        )
+
+        if confirmar == QtWidgets.QMessageBox.No:
+            return
+
+        try:
+            conexion = connect_db()
+            cursor = conexion.cursor()
+            cursor.execute(
+                "UPDATE maestros SET activo = FALSE WHERE numero_economico = %s",
+                (numero,),
+            )
+            conexion.commit()
+            cursor.close()
+            conexion.close()
+
+            QtWidgets.QMessageBox.information(
+                self, "Éxito", f"El maestro con número {numero} ha sido dado de baja."
+            )
+            self.ui.input_buscar_baja_m.clear()
+            self.ui.combo_baja_maestro.clear()
+
+        except Exception as e:
+            print("❌ Error al dar de baja al maestro:", e)
+            QtWidgets.QMessageBox.critical(
+                self, "Error", "Ocurrió un error al dar de baja al maestro."
+            )
+
+    # actualizar combo búsqueda
+    def actualizar_combo_update_maestro(self):
+        texto = self.ui.input_buscar_update_m.text().strip().upper()
+        if not texto:
+            self.ui.combo_update_maestro.clear()
+            return
+
+        try:
+            conexion = connect_db()
+            cursor = conexion.cursor()
+            query = """
+                SELECT numero_economico, nombre, apellido_paterno, apellido_materno
+                FROM maestros
+                WHERE activo = TRUE AND (
+                    numero_economico LIKE %s OR
+                    nombre LIKE %s OR
+                    apellido_paterno LIKE %s OR
+                    apellido_materno LIKE %s
+                )
+            """
+            valores = (f"%{texto}%",) * 4
+            cursor.execute(query, valores)
+            resultados = cursor.fetchall()
+            cursor.close()
+            conexion.close()
+
+            self.ui.combo_update_maestro.clear()
+            for maestro in resultados:
+                num_econ, nombre, ap_pat, ap_mat = maestro
+                etiqueta = f"{num_econ} - {nombre} {ap_pat} {ap_mat}"
+                self.ui.combo_update_maestro.addItem(etiqueta, num_econ)
+
+        except Exception as e:
+            print("❌ Error al buscar maestros para actualizar:", e)
+
+    # mostrar info actualizada
+    def mostrar_info_update_maestro(self):
+        num_econ = self.ui.combo_update_maestro.currentData()
+        if not num_econ:
+            return
+
+        from data_access.insertar_datos_dao import obtener_registro_por_campo
+
+        maestro = obtener_registro_por_campo(
+            "maestros", "numero_economico", num_econ, connect_db
+        )
+
+        if maestro:
+            self.ui.input_nombre_update_m.clear()
+            self.ui.input_ap_paterno_update_m.clear()
+            self.ui.input_ap_materno_update_m.clear()
+            self.ui.input_direccion_update_m.clear()
+            self.ui.input_correo_update_m.clear()
+            self.ui.input_numero_economico_update_m.clear()
+
+            self.ui.input_nombre_update_m.setPlaceholderText(maestro["nombre"])
+            self.ui.input_ap_paterno_update_m.setPlaceholderText(
+                maestro["apellido_paterno"]
+            )
+            self.ui.input_ap_materno_update_m.setPlaceholderText(
+                maestro["apellido_materno"]
+            )
+            self.ui.input_direccion_update_m.setPlaceholderText(maestro["direccion"])
+            self.ui.input_correo_update_m.setPlaceholderText(maestro["correo"])
+            self.ui.input_numero_economico_update_m.setPlaceholderText(
+                maestro["numero_economico"]
+            )
+
+            self.ui.check_activo_update_m.setChecked(maestro["activo"])
+
+        self.datos_actuales_update_m = maestro
+
+    # autocompletado datos maestro
+    def autocompletar_campo_update_maestro(self):
+        campo = self.sender()
+        if campo.text().strip() == "":
+            if campo == self.ui.input_nombre_update_m:
+                campo.setText(self.datos_actuales_update_m["nombre"])
+            elif campo == self.ui.input_ap_paterno_update_m:
+                campo.setText(self.datos_actuales_update_m["apellido_paterno"])
+            elif campo == self.ui.input_ap_materno_update_m:
+                campo.setText(self.datos_actuales_update_m["apellido_materno"])
+            elif campo == self.ui.input_direccion_update_m:
+                campo.setText(self.datos_actuales_update_m["direccion"])
+            elif campo == self.ui.input_correo_update_m:
+                campo.setText(self.datos_actuales_update_m["correo"])
+            elif campo == self.ui.input_numero_economico_update_m:
+                campo.setText(self.datos_actuales_update_m["numero_economico"])
+
+    # guardar cambios
+    def guardar_cambios_update_maestro(self):
+        from data_access.insertar_datos_dao import actualizar_campos
+
+        num_econ = self.ui.combo_update_maestro.currentData()
+        if not num_econ or not self.datos_actuales_update_m:
+            QtWidgets.QMessageBox.warning(
+                self, "Error", "No se seleccionó ningún maestro."
+            )
+            return
+
+        # Rellenar campos vacíos con el placeholder (valor anterior mostrado en tenue)
+        for campo in [
+            self.ui.input_nombre_update_m,
+            self.ui.input_ap_paterno_update_m,
+            self.ui.input_ap_materno_update_m,
+            self.ui.input_direccion_update_m,
+            self.ui.input_correo_update_m,
+            self.ui.input_numero_economico_update_m,
+        ]:
+            if campo.text().strip() == "":
+                campo.setText(campo.placeholderText())
+
+        nuevos_datos = {
+            "nombre": self.ui.input_nombre_update_m.text().strip().upper(),
+            "apellido_paterno": self.ui.input_ap_paterno_update_m.text()
+            .strip()
+            .upper(),
+            "apellido_materno": self.ui.input_ap_materno_update_m.text()
+            .strip()
+            .upper(),
+            "direccion": self.ui.input_direccion_update_m.text().strip().upper(),
+            "correo": self.ui.input_correo_update_m.text().strip().lower(),
+            "numero_economico": self.ui.input_numero_economico_update_m.text()
+            .strip()
+            .upper(),
+            "activo": self.ui.check_activo_update_m.isChecked(),
+        }
+
+        cambios = {}
+        for campo, nuevo_valor in nuevos_datos.items():
+            if nuevo_valor != str(self.datos_actuales_update_m[campo]):
+                cambios[campo] = nuevo_valor
+
+        if not cambios:
+            QtWidgets.QMessageBox.information(
+                self, "Sin cambios", "No se realizaron modificaciones."
+            )
+            return
+
+        exito = actualizar_campos(
+            "maestros", cambios, "numero_economico", num_econ, connect_db
+        )
+
+        if exito:
+            QtWidgets.QMessageBox.information(
+                self, "Éxito", "Datos actualizados correctamente."
+            )
+            self.limpiar_formulario_update_maestro()
+        else:
+            QtWidgets.QMessageBox.critical(
+                self, "Error", "No se pudo actualizar el registro."
+            )
+
+    # limpiar formulario
+    def limpiar_formulario_update_maestro(self):
+        self.ui.input_nombre_update_m.clear()
+        self.ui.input_ap_paterno_update_m.clear()
+        self.ui.input_ap_materno_update_m.clear()
+        self.ui.input_direccion_update_m.clear()
+        self.ui.input_correo_update_m.clear()
+        self.ui.input_numero_economico_update_m.clear()
+        self.ui.check_activo_update_m.setChecked(False)
+        self.ui.input_buscar_update_m.clear()
+        self.ui.combo_update_maestro.clear()
+        self.datos_actuales_update_m = None
 
 
 if __name__ == "__main__":
