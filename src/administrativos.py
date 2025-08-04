@@ -598,6 +598,15 @@ class Ui_MainWindow(object):
         form_materia.addRow("Cupo Máximo:", self.spin_cupo_materia_alta)
 
         alta_mat_layout.addWidget(group_datos_materia)
+        # Botones para registrar/cancelar
+        btn_layout_materia = QtWidgets.QHBoxLayout()
+        btn_layout_materia.addStretch()
+        self.btn_guardar_materia_alta = QtWidgets.QPushButton("Registrar Materia")
+        self.btn_cancelar_materia_alta = QtWidgets.QPushButton("Cancelar")
+        btn_layout_materia.addWidget(self.btn_guardar_materia_alta)
+        btn_layout_materia.addWidget(self.btn_cancelar_materia_alta)
+
+        alta_mat_layout.addLayout(btn_layout_materia)  # 👈 esto va antes del stack
         self.stack_materias.addWidget(self.page_alta_materia)
 
         # ===============================
@@ -614,6 +623,30 @@ class Ui_MainWindow(object):
         baja_mat_layout.addWidget(QtWidgets.QLabel("Buscar Materia:"))
         baja_mat_layout.addWidget(self.input_buscar_baja_materia)
         baja_mat_layout.addWidget(self.combo_baja_materia)
+        # 🔹 Mostrar información de la materia seleccionada
+        self.group_info_baja_materia = QtWidgets.QGroupBox(
+            "Datos de la Materia Seleccionada"
+        )
+        self.layout_info_baja_materia = QtWidgets.QFormLayout(
+            self.group_info_baja_materia
+        )
+
+        self.label_nombre_baja_materia = QtWidgets.QLabel()
+        self.label_creditos_baja_materia = QtWidgets.QLabel()
+        self.label_cupo_baja_materia = QtWidgets.QLabel()
+        self.label_clave_baja_materia = QtWidgets.QLabel()
+
+        self.layout_info_baja_materia.addRow("Nombre:", self.label_nombre_baja_materia)
+        self.layout_info_baja_materia.addRow(
+            "Créditos:", self.label_creditos_baja_materia
+        )
+        self.layout_info_baja_materia.addRow(
+            "Cupo Máximo:", self.label_cupo_baja_materia
+        )
+        self.layout_info_baja_materia.addRow("Clave:", self.label_clave_baja_materia)
+
+        baja_mat_layout.addWidget(self.group_info_baja_materia)
+        self.group_info_baja_materia.hide()
         baja_mat_layout.addStretch()
         baja_mat_layout.addWidget(self.btn_baja_materia)
         self.stack_materias.addWidget(self.page_baja_materia_m)
@@ -1606,6 +1639,52 @@ class MainWindow(QMainWindow):
             self.limpiar_formulario_update_maestro
         )
 
+        # ===============================
+        # ✅ Conexiones para Materias
+        # ===============================
+        self.ui.btn_guardar_materia_alta.clicked.connect(self.dar_alta_materia)
+        self.ui.btn_cancelar_materia_alta.clicked.connect(
+            self.limpiar_campos_alta_materia
+        )
+
+        self.ui.input_buscar_baja_materia.textChanged.connect(
+            self.actualizar_combo_baja_materia
+        )
+        self.ui.combo_baja_materia.currentIndexChanged.connect(
+            self.mostrar_info_baja_materia
+        )
+        self.ui.btn_baja_materia.clicked.connect(self.dar_baja_materia)
+
+        # 👇 Llamada inicial para llenar el combo al cargar la vista (sin duplicar conexiones)
+        self.actualizar_combo_baja_materia()
+
+        # ==================================
+        # 🔗 Conexiones para Actualizar Materias
+        # ==================================
+
+        # Buscar mientras escribe
+        self.ui.input_buscar_update_materia.textChanged.connect(
+            self.actualizar_combo_update_materia
+        )
+
+        # Mostrar info de la materia al seleccionar
+        self.ui.combo_update_materia.currentIndexChanged.connect(
+            self.mostrar_info_update_materia
+        )
+
+        # Guardar cambios al presionar Actualizar
+        self.ui.btn_guardar_update_materia.clicked.connect(
+            self.actualizar_datos_materia
+        )
+
+        # Limpiar campos al presionar Cancelar
+        self.ui.btn_cancelar_update_materia.clicked.connect(
+            self.limpiar_campos_update_materia
+        )
+
+        # Cargar lista inicial al abrir la vista
+        self.actualizar_combo_update_materia()
+
     def cerrar_sesion(self):
         import subprocess
         import sys
@@ -2425,6 +2504,244 @@ class MainWindow(QMainWindow):
         self.ui.input_buscar_update_m.clear()
         self.ui.combo_update_maestro.clear()
         self.datos_actuales_update_m = None
+
+    # alta de materias
+    def dar_alta_materia(self):
+        from data_access.insertar_datos_dao import insertar_registro
+
+        nombre = self.ui.input_nombre_materia_alta.text().strip().upper()
+        clave = self.ui.input_clave_materia_alta.text().strip().upper()
+        creditos = self.ui.spin_creditos_materia_alta.value()
+        cupo_maximo = self.ui.spin_cupo_materia_alta.value()
+
+        if not all([nombre, clave, creditos, cupo_maximo]):
+            QtWidgets.QMessageBox.warning(
+                self, "Campos incompletos", "Todos los campos deben llenarse."
+            )
+            return
+
+        datos = {
+            "clave": clave,
+            "nombre": nombre,
+            "creditos": creditos,
+            "cupo_maximo": cupo_maximo,
+        }
+
+        try:
+            exito = insertar_registro("materias", datos, connect_db)
+            if exito:
+                QtWidgets.QMessageBox.information(
+                    self, "Éxito", "Materia registrada correctamente."
+                )
+                self.limpiar_campos_alta_materia()
+            else:
+                QtWidgets.QMessageBox.critical(
+                    self, "Error", "No se pudo registrar la materia."
+                )
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(self, "Error", f"Ocurrió un error: {e}")
+
+    # limpiar formulario alta materios
+    def limpiar_campos_alta_materia(self):
+        self.ui.input_nombre_materia_alta.clear()
+        self.ui.input_clave_materia_alta.clear()
+        self.ui.spin_creditos_materia_alta.setValue(1)
+        self.ui.spin_cupo_materia_alta.setValue(1)
+
+    # actualizar combo baja
+    def actualizar_combo_baja_materia(self):
+        texto = self.ui.input_buscar_baja_materia.text().strip().upper()
+        print("🔍 Buscando materias con texto:", texto)
+
+        try:
+            conexion = connect_db()
+            cursor = conexion.cursor()
+            query = """
+                SELECT clave, nombre FROM materias
+                WHERE activo = TRUE AND (UPPER(clave) LIKE %s OR UPPER(nombre) LIKE %s)
+            """
+            valores = (f"%{texto}%", f"%{texto}%")
+            cursor.execute(query, valores)
+            resultados = cursor.fetchall()
+            cursor.close()
+            conexion.close()
+
+            self.ui.combo_baja_materia.clear()
+            for clave, nombre in resultados:
+                etiqueta = f"{clave} - {nombre}"
+                self.ui.combo_baja_materia.addItem(etiqueta, clave)
+
+        except Exception as e:
+            print("❌ Error al buscar materias:", e)
+
+    # info baja de materia
+    def mostrar_info_baja_materia(self):
+        clave = self.ui.combo_baja_materia.currentData()
+        if not clave:
+            self.ui.group_info_baja_materia.hide()
+            return
+
+        from data_access.insertar_datos_dao import obtener_registro_por_campo
+
+        materia = obtener_registro_por_campo("materias", "clave", clave, connect_db)
+
+        if materia:
+            self.ui.label_nombre_baja_materia.setText(materia["nombre"])
+            self.ui.label_creditos_baja_materia.setText(str(materia["creditos"]))
+            self.ui.label_cupo_baja_materia.setText(str(materia["cupo_maximo"]))
+            self.ui.label_clave_baja_materia.setText(materia["clave"])
+            self.ui.group_info_baja_materia.show()
+        else:
+            self.ui.group_info_baja_materia.hide()
+
+    # baja de materia
+    def dar_baja_materia(self):
+        clave = self.ui.combo_baja_materia.currentData()
+        if not clave:
+            QtWidgets.QMessageBox.warning(
+                self, "Error", "No se seleccionó ninguna materia."
+            )
+            return
+
+        confirmacion = QtWidgets.QMessageBox.question(
+            self,
+            "Confirmar baja",
+            "¿Estás seguro de dar de baja esta materia?",
+            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+        )
+
+        if confirmacion == QtWidgets.QMessageBox.Yes:
+            from data_access.insertar_datos_dao import actualizar_campos
+
+            try:
+                exito = actualizar_campos(
+                    "materias", {"activo": False}, "clave", clave, connect_db
+                )
+                if exito:
+                    QtWidgets.QMessageBox.information(
+                        self, "Éxito", "Materia dada de baja correctamente."
+                    )
+                    self.ui.input_buscar_baja_materia.clear()
+                    self.ui.combo_baja_materia.clear()
+                else:
+                    QtWidgets.QMessageBox.critical(
+                        self, "Error", "No se pudo dar de baja la materia."
+                    )
+            except Exception as e:
+                QtWidgets.QMessageBox.critical(self, "Error", f"Ocurrió un error: {e}")
+
+        # llenado combo
+
+    # ================================
+    # 🧠 Conexiones y lógica de actualización de materias
+    # ================================
+
+    # 🔍 Actualizar combo de materias según el texto
+    def actualizar_combo_update_materia(self):
+        texto = self.ui.input_buscar_update_materia.text().strip().upper()
+        print("🔍 Buscando materias con texto:", texto)
+
+        try:
+            conexion = connect_db()
+            cursor = conexion.cursor()
+            query = """
+                SELECT clave, nombre FROM materias
+                WHERE activo = TRUE AND (clave LIKE %s OR nombre LIKE %s)
+            """
+            valores = (f"%{texto}%", f"%{texto}%")
+            cursor.execute(query, valores)
+            resultados = cursor.fetchall()
+            cursor.close()
+            conexion.close()
+
+            self.ui.combo_update_materia.clear()
+            for clave, nombre in resultados:
+                self.ui.combo_update_materia.addItem(f"{clave} - {nombre}", clave)
+
+        except Exception as e:
+            print("❌ Error al buscar materias:", e)
+
+    # 📋 Mostrar los datos en los QLineEdit y QSpinBox
+    def mostrar_info_update_materia(self):
+        clave = self.ui.combo_update_materia.currentData()
+        if not clave:
+            return
+
+        from data_access.insertar_datos_dao import obtener_registro_por_campo
+
+        materia = obtener_registro_por_campo("materias", "clave", clave, connect_db)
+
+        if materia:
+            self.ui.input_nombre_update_materia.setText(materia["nombre"])
+            self.ui.input_clave_update_materia.setText(materia["clave"])
+            self.ui.spin_creditos_update_materia.setValue(materia["creditos"])
+            self.ui.spin_cupo_update_materia.setValue(materia["cupo_maximo"])
+
+    # ✅ Guardar cambios
+    def actualizar_datos_materia(self):
+        clave_original = self.ui.combo_update_materia.currentData()
+        if not clave_original:
+            QtWidgets.QMessageBox.warning(
+                self, "Error", "No se seleccionó ninguna materia."
+            )
+            return
+
+        from data_access.insertar_datos_dao import (
+            actualizar_campos,
+            obtener_registro_por_campo,
+        )
+
+        materia_actual = obtener_registro_por_campo(
+            "materias", "clave", clave_original, connect_db
+        )
+
+        nuevos_datos = {}
+
+        nombre = self.ui.input_nombre_update_materia.text().strip().upper()
+        if nombre and nombre != materia_actual["nombre"]:
+            nuevos_datos["nombre"] = nombre
+
+        clave = self.ui.input_clave_update_materia.text().strip().upper()
+        if clave and clave != materia_actual["clave"]:
+            nuevos_datos["clave"] = clave
+
+        creditos = self.ui.spin_creditos_update_materia.value()
+        if creditos != materia_actual["creditos"]:
+            nuevos_datos["creditos"] = creditos
+
+        cupo_maximo = self.ui.spin_cupo_update_materia.value()
+        if cupo_maximo != materia_actual["cupo_maximo"]:
+            nuevos_datos["cupo_maximo"] = cupo_maximo
+
+        if not nuevos_datos:
+            QtWidgets.QMessageBox.information(
+                self, "Sin cambios", "No se detectaron cambios para actualizar."
+            )
+            return
+
+        try:
+            exito = actualizar_campos(
+                "materias", nuevos_datos, "clave", clave_original, connect_db
+            )
+            if exito:
+                QtWidgets.QMessageBox.information(
+                    self, "Éxito", "Datos actualizados correctamente."
+                )
+                self.actualizar_combo_update_materia()
+            else:
+                QtWidgets.QMessageBox.critical(
+                    self, "Error", "No se pudo actualizar la materia."
+                )
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(self, "Error", f"Ocurrió un error: {e}")
+
+    def limpiar_campos_update_materia(self):
+        self.ui.input_buscar_update_materia.clear()
+        self.ui.combo_update_materia.clear()
+        self.ui.input_nombre_update_materia.clear()
+        self.ui.input_clave_update_materia.clear()
+        self.ui.spin_creditos_update_materia.setValue(1)
+        self.ui.spin_cupo_update_materia.setValue(1)
 
 
 if __name__ == "__main__":
