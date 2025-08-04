@@ -4,6 +4,7 @@ from PySide6.QtGui import QActionGroup
 import sys
 import datetime
 import subprocess
+import recursos_maestros
 from db_connection import connect_db
 from data_access.insertar_datos_dao import *
 

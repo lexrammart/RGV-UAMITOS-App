@@ -5,8 +5,20 @@ import sys
 import datetime
 import recursos_directivo
 import subprocess
+import bcrypt
 from db_connection import connect_db
 from data_access.insertar_datos_dao import *
+from PySide6.QtWidgets import QComboBox
+
+
+class ComboBoxRecargable(QComboBox):
+    def __init__(self, cargar_funcion, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._cargar_funcion = cargar_funcion
+
+    def showPopup(self):
+        self._cargar_funcion()
+        super().showPopup()
 
 
 class Ui_MainWindow(object):
@@ -430,6 +442,17 @@ class Ui_MainWindow(object):
         baja_u_layout.addWidget(self.btn_dar_baja_u)
         baja_u_layout.addStretch()
 
+        # Labels para mostrar los datos del usuario
+        self.label_nombre_baja_u = QtWidgets.QLabel("")
+        self.label_rol_baja_u = QtWidgets.QLabel("")
+        self.label_correo_baja_u = QtWidgets.QLabel("")
+        self.label_activo_baja_u = QtWidgets.QLabel("")
+
+        group_baja_layout.addRow("Nombre completo:", self.label_nombre_baja_u)
+        group_baja_layout.addRow("Rol:", self.label_rol_baja_u)
+        group_baja_layout.addRow("Correo:", self.label_correo_baja_u)
+        group_baja_layout.addRow("Activo:", self.label_activo_baja_u)
+
         self.stack_usuarios.addWidget(self.page_baja_usuario)
 
         # ===============================
@@ -450,7 +473,9 @@ class Ui_MainWindow(object):
         group_asignar_rol = QtWidgets.QGroupBox("Asignar Nuevo Rol")
         layout_asignar_rol = QtWidgets.QFormLayout(group_asignar_rol)
         self.combo_nuevo_rol = QtWidgets.QComboBox()
-        self.combo_nuevo_rol.addItems(["Maestro", "Administrativo", "Directivo"])
+        self.combo_nuevo_rol.addItem("Maestro", "PROFESOR")
+        self.combo_nuevo_rol.addItem("Administrativo", "ADMINISTRATIVO")
+        self.combo_nuevo_rol.addItem("Directivo", "DIRECTIVO")
         self.btn_guardar_rol = QtWidgets.QPushButton("Guardar Cambios")
 
         layout_asignar_rol.addRow("Rol:", self.combo_nuevo_rol)
@@ -459,6 +484,15 @@ class Ui_MainWindow(object):
         layout_cambiar_roles.addWidget(group_asignar_rol)
         layout_cambiar_roles.addWidget(self.btn_guardar_rol)
         layout_cambiar_roles.addStretch()
+        self.label_nombre_rol_actual = QtWidgets.QLabel("")
+        self.label_email_rol_actual = QtWidgets.QLabel("")
+        self.label_rol_actual = QtWidgets.QLabel("")
+        self.label_activo_rol_actual = QtWidgets.QLabel("")
+
+        layout_asignar_rol.addRow("Nombre completo:", self.label_nombre_rol_actual)
+        layout_asignar_rol.addRow("Correo:", self.label_email_rol_actual)
+        layout_asignar_rol.addRow("Rol actual:", self.label_rol_actual)
+        layout_asignar_rol.addRow("Activo:", self.label_activo_rol_actual)
 
         self.stack_usuarios.addWidget(self.page_cambiar_roles)
 
@@ -1599,6 +1633,8 @@ class MainWindow(QMainWindow):
         super(MainWindow, self).__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+
+        self.cargar_periodos_en_combo()
         # conexión cerrar sesión
         self.ui.btn_logout.clicked.connect(self.cerrar_sesion)
         self.ui.btn_logout_texto.clicked.connect(self.cerrar_sesion)
@@ -1629,6 +1665,46 @@ class MainWindow(QMainWindow):
                 self.ui.pagina_bienvenida
             )
         )
+
+        # conexión alta usuario
+        self.ui.btn_guardar_u_alta.clicked.connect(self.guardar_usuario_alta)
+        self.ui.btn_cancelar_u_alta.clicked.connect(self.limpiar_campos_alta_usuario)
+
+        # conexión baja usuario
+        self.ui.input_buscar_baja_u.textChanged.connect(
+            self.actualizar_combo_baja_usuarios
+        )
+        self.ui.combo_resultado_baja_u.currentIndexChanged.connect(
+            self.mostrar_datos_usuario_combo
+        )
+        self.ui.btn_dar_baja_u.clicked.connect(self.dar_baja_usuario)
+
+        # conexión cambiar rolee
+        self.ui.input_buscar_roles.textChanged.connect(
+            lambda: self.buscar_usuarios_y_llenar_combo(
+                self.ui.input_buscar_roles, self.ui.combo_resultado_roles
+            )
+        )
+        self.ui.combo_resultado_roles.currentIndexChanged.connect(
+            self.mostrar_datos_usuario_roles
+        )
+        self.ui.btn_guardar_rol.clicked.connect(self.guardar_nuevo_rol_usuario)
+
+        # coexión asignación contraseña
+        self.ui.btn_guardar_password.clicked.connect(self.asignar_cambiar_contrasena)
+        self.ui.btn_cancelar_password.clicked.connect(self.limpiar_campos_password)
+
+        # conexión período
+        self.ui.btn_guardar_periodo.clicked.connect(self.guardar_periodo)
+        self.ui.btn_activar_periodo.clicked.connect(
+            self.activar_periodo
+        )  # activar período
+        self.combo_periodos_disponibles = ComboBoxRecargable(
+            self.cargar_periodos_en_combo
+        )
+        self.ui.btn_guardar_vacaciones.clicked.connect(
+            self.marcar_vacaciones
+        )  # conexxión vacaciones
 
     # === Función para actualizar saludo dinámico ===
     def actualizar_bienvenida(self):
@@ -1672,6 +1748,625 @@ class MainWindow(QMainWindow):
         print("⚠️ Cerrando sesión y lanzando login.py...")
         subprocess.Popen([sys.executable, ruta_login])
         self.close()
+
+    # guardar usuario / alta de usuario
+    def guardar_usuario_alta(self):
+        nombre = self.ui.input_nombre_u_alta.text().strip().upper()
+        ap_paterno = self.ui.input_ap_paterno_u_alta.text().strip().upper()
+        ap_materno = self.ui.input_ap_materno_u_alta.text().strip().upper()
+        fecha_nac = self.ui.input_fecha_nac_u_alta.date().toString("yyyy-MM-dd")
+        direccion = self.ui.input_direccion_u_alta.text().strip().upper()
+        telefono = self.ui.input_telefono_u_alta.text().strip().upper()
+        correo = self.ui.input_correo_u_alta.text().strip()  # se queda en minúsculas
+
+        numero_economico = self.ui.input_numero_economico_u_alta.text().strip().upper()
+        rol = self.ui.combo_rol_u_alta.currentText().strip().upper()
+        rol = self.ui.combo_rol_u_alta.currentText()
+        password = self.ui.input_password_u_alta.text().strip()
+        hashed_password = bcrypt.hashpw(
+            password.encode("utf-8"), bcrypt.gensalt()
+        ).decode("utf-8")
+        activo = self.ui.check_activo_u_alta.isChecked()
+
+        # Validación rápida
+        if not all(
+            [
+                nombre,
+                ap_paterno,
+                ap_materno,
+                fecha_nac,
+                direccion,
+                telefono,
+                correo,
+                numero_economico,
+                password,
+            ]
+        ):
+            QtWidgets.QMessageBox.warning(
+                self,
+                "Campos vacíos",
+                "Por favor, completa todos los campos obligatorios.",
+            )
+            return
+
+        try:
+            conexion = connect_db()
+            cursor = conexion.cursor()
+
+            query = """
+            INSERT INTO usuarios (
+                numero_economico, nombre, apellido_paterno, apellido_materno,
+                sexo, fecha_nacimiento, telefono, email, direccion,
+                rol, contrasena, activo
+            ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """
+            cursor.execute(
+                query,
+                (
+                    numero_economico,
+                    nombre,
+                    ap_paterno,
+                    ap_materno,
+                    "X",  # ⚠️ No hay campo para sexo en el form
+                    fecha_nac,
+                    telefono,
+                    correo,
+                    direccion,
+                    rol,
+                    hashed_password,
+                    activo,
+                ),
+            )
+
+            conexion.commit()
+            cursor.close()
+            conexion.close()
+
+            QtWidgets.QMessageBox.information(
+                self, "Éxito", "Usuario dado de alta correctamente."
+            )
+            self.limpiar_campos_alta_usuario()
+
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(
+                self, "Error", f"No se pudo dar de alta el usuario.\n{e}"
+            )
+
+    # limpiar formulario
+    def limpiar_campos_alta_usuario(self):
+        self.ui.input_nombre_u_alta.clear()
+        self.ui.input_ap_paterno_u_alta.clear()
+        self.ui.input_ap_materno_u_alta.clear()
+        self.ui.input_fecha_nac_u_alta.setDate(QtCore.QDate(2000, 1, 1))
+        self.ui.input_direccion_u_alta.clear()
+        self.ui.input_telefono_u_alta.clear()
+        self.ui.input_correo_u_alta.clear()
+        self.ui.input_numero_economico_u_alta.clear()
+        self.ui.combo_rol_u_alta.setCurrentIndex(0)
+        self.ui.input_password_u_alta.clear()
+        self.ui.check_activo_u_alta.setChecked(False)
+
+    # buscar y actualizar combo
+    def actualizar_combo_baja_usuarios(self):
+        texto = self.ui.input_buscar_baja_u.text().strip().upper()
+        self.ui.combo_resultado_baja_u.clear()
+
+        if not texto:
+            return
+
+        try:
+            conexion = connect_db()
+            cursor = conexion.cursor()
+
+            query = """
+                SELECT id, numero_economico, nombre, apellido_paterno, apellido_materno
+                FROM usuarios
+                WHERE activo = TRUE AND (
+                    UPPER(nombre) LIKE %s OR
+                    UPPER(apellido_paterno) LIKE %s OR
+                    UPPER(apellido_materno) LIKE %s OR
+                    UPPER(numero_economico) LIKE %s
+                )
+            """
+            like_text = f"%{texto}%"
+            cursor.execute(query, (like_text, like_text, like_text, like_text))
+            resultados = cursor.fetchall()
+
+            for usuario in resultados:
+                id_, num_econ, nombre, ap_pat, ap_mat = usuario
+                etiqueta = f"{num_econ} - {nombre} {ap_pat} {ap_mat}"
+                self.ui.combo_resultado_baja_u.addItem(etiqueta, id_)
+
+            cursor.close()
+            conexion.close()
+
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(
+                self, "Error", f"No se pudo buscar usuarios.\n{e}"
+            )
+
+    # mostar datos
+    def mostrar_datos_usuario_combo(self):
+        index = self.ui.combo_resultado_baja_u.currentIndex()
+        if index == -1:
+            return
+
+        id_usuario = self.ui.combo_resultado_baja_u.currentData()
+
+        try:
+            conexion = connect_db()
+            cursor = conexion.cursor()
+
+            query = """
+                SELECT nombre, apellido_paterno, apellido_materno,
+                    rol, email, activo
+                FROM usuarios
+                WHERE id = %s
+            """
+            cursor.execute(query, (id_usuario,))
+            resultado = cursor.fetchone()
+            cursor.close()
+            conexion.close()
+
+            if resultado:
+                nombre, ap_pat, ap_mat, rol, correo, activo = resultado
+                self.ui.label_nombre_baja_u.setText(f"{nombre} {ap_pat} {ap_mat}")
+                self.ui.label_rol_baja_u.setText(rol)
+                self.ui.label_correo_baja_u.setText(correo)
+                self.ui.label_activo_baja_u.setText("Sí" if activo else "No")
+            else:
+                self.ui.label_nombre_baja_u.setText("No encontrado")
+                self.ui.label_rol_baja_u.setText("")
+                self.ui.label_correo_baja_u.setText("")
+                self.ui.label_activo_baja_u.setText("")
+
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(
+                self, "Error", f"No se pudo obtener los datos del usuario.\n{e}"
+            )
+
+    # dar de baja usuario
+    def dar_baja_usuario(self):
+        index = self.ui.combo_resultado_baja_u.currentIndex()
+        if index == -1:
+            QtWidgets.QMessageBox.warning(
+                self, "Sin selección", "Selecciona un usuario para dar de baja."
+            )
+            return
+
+        id_usuario = self.ui.combo_resultado_baja_u.currentData()
+
+        confirmacion = QtWidgets.QMessageBox.question(
+            self,
+            "Confirmar baja",
+            "¿Estás seguro que deseas dar de baja al usuario seleccionado?",
+            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+        )
+
+        if confirmacion == QtWidgets.QMessageBox.No:
+            return
+
+        try:
+            conexion = connect_db()
+            cursor = conexion.cursor()
+
+            query = "UPDATE usuarios SET activo = FALSE WHERE id = %s"
+            cursor.execute(query, (id_usuario,))
+            conexion.commit()
+            cursor.close()
+            conexion.close()
+
+            QtWidgets.QMessageBox.information(
+                self, "Listo", "Usuario dado de baja correctamente."
+            )
+            self.ui.input_buscar_baja_u.clear()
+            self.ui.combo_resultado_baja_u.clear()
+
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(
+                self, "Error", f"No se pudo dar de baja.\n{e}"
+            )
+
+        self.ui.label_nombre_baja_u.clear()
+        self.ui.label_rol_baja_u.clear()
+        self.ui.label_correo_baja_u.clear()
+        self.ui.label_activo_baja_u.clear()
+
+    # mostrar selección cambio de roles
+    def mostrar_datos_usuario_roles(self):
+        index = self.ui.combo_resultado_roles.currentIndex()
+        if index == -1:
+            return
+
+        id_usuario = self.ui.combo_resultado_roles.currentData()
+
+        try:
+            conexion = connect_db()
+            cursor = conexion.cursor()
+
+            query = """
+                SELECT nombre, apellido_paterno, apellido_materno,
+                    rol, email, activo
+                FROM usuarios
+                WHERE id = %s
+            """
+            cursor.execute(query, (id_usuario,))
+            resultado = cursor.fetchone()
+            cursor.close()
+            conexion.close()
+
+            if resultado:
+                nombre, ap_pat, ap_mat, rol, correo, activo = resultado
+                self.ui.label_nombre_rol_actual.setText(f"{nombre} {ap_pat} {ap_mat}")
+                self.ui.label_email_rol_actual.setText(correo)
+                self.ui.label_rol_actual.setText(rol)
+                self.ui.label_activo_rol_actual.setText("Sí" if activo else "No")
+            else:
+                self.limpiar_labels_roles()
+
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(
+                self, "Error", f"No se pudo obtener los datos del usuario.\n{e}"
+            )
+
+    # limpiar roles
+    def limpiar_labels_roles(self):
+        self.ui.label_nombre_rol_actual.clear()
+        self.ui.label_email_rol_actual.clear()
+        self.ui.label_rol_actual.clear()
+        self.ui.label_activo_rol_actual.clear()
+
+    # combo cambiar roles
+    def buscar_usuarios_y_llenar_combo(self, input_lineedit, combo_box):
+        texto = input_lineedit.text().strip().upper()
+        combo_box.clear()
+
+        if not texto:
+            return
+
+        try:
+            conexion = connect_db()
+            cursor = conexion.cursor()
+
+            query = """
+                SELECT id, numero_economico, nombre, apellido_paterno, apellido_materno
+                FROM usuarios
+                WHERE activo = TRUE AND (
+                    UPPER(nombre) LIKE %s OR
+                    UPPER(apellido_paterno) LIKE %s OR
+                    UPPER(apellido_materno) LIKE %s OR
+                    UPPER(numero_economico) LIKE %s
+                )
+            """
+            like_text = f"%{texto}%"
+            cursor.execute(query, (like_text, like_text, like_text, like_text))
+            resultados = cursor.fetchall()
+
+            for usuario in resultados:
+                id_, num_econ, nombre, ap_pat, ap_mat = usuario
+                etiqueta = f"{num_econ} - {nombre} {ap_pat} {ap_mat}"
+                combo_box.addItem(etiqueta, id_)
+
+            cursor.close()
+            conexion.close()
+
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(
+                self, "Error", f"No se pudo buscar usuarios.\n{e}"
+            )
+
+    # guardar nuevo rol
+    def guardar_nuevo_rol_usuario(self):
+        index = self.ui.combo_resultado_roles.currentIndex()
+        if index == -1:
+            QtWidgets.QMessageBox.warning(
+                self, "Sin selección", "Selecciona un usuario para actualizar su rol."
+            )
+            return
+
+        nuevo_rol = self.ui.combo_nuevo_rol.currentText().strip().upper()
+        id_usuario = self.ui.combo_resultado_roles.currentData()
+
+        confirm = QtWidgets.QMessageBox.question(
+            self,
+            "Confirmar cambio de rol",
+            f"¿Estás seguro que deseas asignar el rol '{nuevo_rol}' al usuario seleccionado?",
+            QtWidgets.QMessageBox.Yes | QtWidgets.QMessageBox.No,
+        )
+
+        if confirm == QtWidgets.QMessageBox.No:
+            return
+
+        try:
+            conexion = connect_db()
+            cursor = conexion.cursor()
+
+            query = "UPDATE usuarios SET rol = %s WHERE id = %s"
+            cursor.execute(query, (nuevo_rol, id_usuario))
+            conexion.commit()
+            cursor.close()
+            conexion.close()
+
+            QtWidgets.QMessageBox.information(
+                self, "Éxito", "Rol actualizado correctamente."
+            )
+            self.ui.input_buscar_roles.clear()
+            self.ui.combo_resultado_roles.clear()
+
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(
+                self, "Error", f"No se pudo cambiar el rol.\n{e}"
+            )
+
+        self.limpiar_labels_roles()
+
+    # cabmiar contraseña
+    def asignar_cambiar_contrasena(self):
+        numero_economico = self.ui.input_usuario_pass.text().strip().upper()
+        nueva_pass = self.ui.input_pass_nueva.text().strip()
+        confirmar_pass = self.ui.input_pass_confirmar.text().strip()
+
+        if not numero_economico or not nueva_pass or not confirmar_pass:
+            QtWidgets.QMessageBox.warning(
+                self, "Campos vacíos", "Completa todos los campos."
+            )
+            return
+
+        if nueva_pass != confirmar_pass:
+            QtWidgets.QMessageBox.warning(
+                self, "Error", "Las contraseñas no coinciden."
+            )
+            return
+
+        try:
+            conexion = connect_db()
+            cursor = conexion.cursor()
+
+            # Buscar usuario solo por número económico
+            query_buscar = "SELECT id FROM usuarios WHERE UPPER(numero_economico) = %s"
+            cursor.execute(query_buscar, (numero_economico,))
+            resultado = cursor.fetchone()
+
+            if not resultado:
+                QtWidgets.QMessageBox.warning(
+                    self, "No encontrado", "No se encontró el usuario."
+                )
+                cursor.close()
+                conexion.close()
+                return
+
+            id_usuario = resultado[0]
+
+            # Hashear la nueva contraseña
+            hashed = bcrypt.hashpw(nueva_pass.encode("utf-8"), bcrypt.gensalt()).decode(
+                "utf-8"
+            )
+
+            # Actualizar contraseña
+            query_update = "UPDATE usuarios SET contrasena = %s WHERE id = %s"
+            cursor.execute(query_update, (hashed, id_usuario))
+            conexion.commit()
+            cursor.close()
+            conexion.close()
+
+            QtWidgets.QMessageBox.information(
+                self, "Éxito", "Contraseña actualizada correctamente."
+            )
+            self.limpiar_campos_password()
+
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(
+                self, "Error", f"Ocurrió un error al actualizar.\n{e}"
+            )
+
+    # limpiar campos contrasña asignación
+    def limpiar_campos_password(self):
+        self.ui.input_usuario_pass.clear()
+        self.ui.input_pass_nueva.clear()
+        self.ui.input_pass_confirmar.clear()
+
+    # crear período
+    def guardar_periodo(self):
+        nombre = self.ui.input_nombre_periodo.text().strip().upper()
+        fecha_inicio = self.ui.input_fecha_inicio.date().toString("yyyy-MM-dd")
+        fecha_fin = self.ui.input_fecha_fin.date().toString("yyyy-MM-dd")
+
+        if not nombre:
+            QtWidgets.QMessageBox.warning(
+                self, "Campo vacío", "El nombre del periodo no puede estar vacío."
+            )
+            return
+
+        if fecha_inicio > fecha_fin:
+            QtWidgets.QMessageBox.warning(
+                self,
+                "Fechas inválidas",
+                "La fecha de inicio no puede ser posterior a la fecha de fin.",
+            )
+            return
+
+        try:
+            conexion = connect_db()
+            cursor = conexion.cursor()
+
+            # Verificar si el nombre del periodo ya existe
+            cursor.execute("SELECT id FROM periodos WHERE nombre = %s", (nombre,))
+            if cursor.fetchone():
+                QtWidgets.QMessageBox.warning(
+                    self, "Ya existe", f"El periodo '{nombre}' ya existe."
+                )
+                cursor.close()
+                conexion.close()
+                return
+
+            # Insertar nuevo periodo
+            cursor.execute(
+                """
+                INSERT INTO periodos (nombre, fecha_inicio, fecha_fin)
+                VALUES (%s, %s, %s)
+            """,
+                (nombre, fecha_inicio, fecha_fin),
+            )
+
+            conexion.commit()
+            cursor.close()
+            conexion.close()
+
+            QtWidgets.QMessageBox.information(
+                self, "Éxito", "Periodo creado correctamente."
+            )
+            self.limpiar_formulario_periodo()
+
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(
+                self, "Error", f"No se pudo guardar el periodo.\n{e}"
+            )
+
+    # auxiliar para limpiar
+    def limpiar_formulario_periodo(self):
+        self.ui.input_nombre_periodo.clear()
+        self.ui.input_fecha_inicio.setDate(QtCore.QDate.currentDate())
+        self.ui.input_fecha_fin.setDate(QtCore.QDate.currentDate())
+
+    # cargar períodos
+    def cargar_periodos_en_combo(self):
+        self.ui.combo_periodos_disponibles.clear()
+
+        try:
+            conexion = connect_db()
+            cursor = conexion.cursor()
+
+            cursor.execute("SELECT id, nombre FROM periodos ORDER BY fecha_inicio DESC")
+            periodos = cursor.fetchall()
+
+            for pid, nombre in periodos:
+                self.ui.combo_periodos_disponibles.addItem(nombre, pid)
+
+            cursor.close()
+            conexion.close()
+
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(
+                self, "Error", f"No se pudieron cargar los períodos.\n{e}"
+            )
+
+    # activar período
+    def activar_periodo(self):
+        index = self.ui.combo_periodos_disponibles.currentIndex()
+        if index == -1:
+            QtWidgets.QMessageBox.warning(
+                self, "Sin selección", "Selecciona un período para activarlo."
+            )
+            return
+
+        id_periodo = self.ui.combo_periodos_disponibles.currentData()
+
+        try:
+            conexion = connect_db()
+            cursor = conexion.cursor()
+
+            # Primero desactivamos todos
+            cursor.execute("UPDATE periodos SET activo = FALSE")
+
+            # Luego activamos el seleccionado
+            cursor.execute(
+                "UPDATE periodos SET activo = TRUE WHERE id = %s", (id_periodo,)
+            )
+
+            conexion.commit()
+            cursor.close()
+            conexion.close()
+
+            QtWidgets.QMessageBox.information(
+                self, "Éxito", "El período fue activado correctamente."
+            )
+
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(
+                self, "Error", f"No se pudo activar el período.\n{e}"
+            )
+
+    # cargar período
+    def cargar_periodos_en_combo(self):
+        self.ui.combo_periodos_disponibles.clear()
+
+        try:
+            conexion = connect_db()
+            cursor = conexion.cursor()
+
+            query = "SELECT id, nombre FROM periodos ORDER BY fecha_inicio DESC"
+            cursor.execute(query)
+            resultados = cursor.fetchall()
+
+            for id_periodo, nombre in resultados:
+                self.ui.combo_periodos_disponibles.addItem(nombre, id_periodo)
+
+            cursor.close()
+            conexion.close()
+
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(
+                self, "Error", f"No se pudieron cargar los períodos.\n{e}"
+            )
+
+    # marcar vacaciones
+    def marcar_vacaciones(self):
+        fecha_inicio = self.ui.input_fecha_inicio_vac.date().toString("yyyy-MM-dd")
+        fecha_fin = self.ui.input_fecha_fin_vac.date().toString("yyyy-MM-dd")
+
+        if fecha_inicio > fecha_fin:
+            QtWidgets.QMessageBox.warning(
+                self,
+                "Fechas inválidas",
+                "La fecha de inicio no puede ser posterior a la fecha de fin.",
+            )
+            return
+
+        try:
+            conexion = connect_db()
+            cursor = conexion.cursor()
+
+            # Verificar cruce de fechas con periodos ya registrados
+            query_check = """
+                SELECT COUNT(*) FROM vacaciones
+                WHERE NOT (%s > fecha_fin OR %s < fecha_inicio)
+            """
+            cursor.execute(query_check, (fecha_inicio, fecha_fin))
+            resultado = cursor.fetchone()[0]
+
+            if resultado > 0:
+                QtWidgets.QMessageBox.warning(
+                    self,
+                    "Cruce de Fechas",
+                    "Ya existe un periodo de vacaciones que se cruza con las fechas seleccionadas.",
+                )
+                cursor.close()
+                conexion.close()
+                return
+
+            # Insertar nuevo periodo si no hay cruce
+            query_insert = (
+                "INSERT INTO vacaciones (fecha_inicio, fecha_fin) VALUES (%s, %s)"
+            )
+            cursor.execute(query_insert, (fecha_inicio, fecha_fin))
+            conexion.commit()
+
+            cursor.close()
+            conexion.close()
+
+            QtWidgets.QMessageBox.information(
+                self, "Éxito", "Las vacaciones fueron marcadas correctamente."
+            )
+
+            # Limpiar campos
+            hoy = QtCore.QDate.currentDate()
+            self.ui.input_fecha_inicio_vac.setDate(hoy)
+            self.ui.input_fecha_fin_vac.setDate(hoy)
+
+        except Exception as e:
+            QtWidgets.QMessageBox.critical(
+                self, "Error", f"No se pudo guardar el periodo de vacaciones.\n{e}"
+            )
 
 
 if __name__ == "__main__":
