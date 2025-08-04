@@ -1,6 +1,14 @@
 from PySide6 import QtCore, QtGui, QtWidgets
-from PySide6.QtWidgets import QApplication, QMainWindow, QFileDialog, QTableWidgetItem
+from PySide6.QtWidgets import (
+    QApplication,
+    QMainWindow,
+    QFileDialog,
+    QTableWidgetItem,
+    QMessageBox,
+    QListWidgetItem,
+)
 from PySide6.QtGui import QActionGroup
+from PySide6.QtCore import Qt  # <-- Add this import
 import sys
 import datetime
 from data_access.insertar_datos_dao import *
@@ -8,6 +16,7 @@ from db_connection import connect_db  # <-- Importar conectar
 import subprocess
 import os
 import recursos
+from fpdf import FPDF  # <-- Import FPDF for PDF generation
 
 
 class Ui_MainWindow(object):
@@ -1157,6 +1166,8 @@ class Ui_MainWindow(object):
             )
         )
         self.contendor_contenido.addWidget(self.pagina_alumnos)
+        self.combo_horario_alumno = QtWidgets.QComboBox()
+        horario_layout.addWidget(self.combo_horario_alumno)
 
         ############# fin pagina alumnos ##############
         # ===============================
@@ -1637,6 +1648,33 @@ class MainWindow(QMainWindow):
         )
         self.ui.btn_cancelar_update_m.clicked.connect(
             self.limpiar_formulario_update_maestro
+        )
+
+        # conexión alta materias-alumno
+        self.ui.btn_inscribir_materias.clicked.connect(self.inscribir_materias)
+        self.ui.input_buscar_inscribir.textChanged.connect(
+            self.actualizar_combo_inscribir_alumno
+        )
+        self.ui.combo_inscribir_alumno.currentIndexChanged.connect(
+            self.cargar_materias_disponibles
+        )
+
+        # baja materia conexión
+        self.ui.input_buscar_baja_materia.textChanged.connect(
+            self.actualizar_combo_baja_alumno
+        )
+        self.ui.combo_baja_alumno.currentIndexChanged.connect(
+            self.cargar_materias_inscritas
+        )
+        self.ui.btn_baja_materias.clicked.connect(self.dar_de_baja_materias)
+        self.ui.input_buscar_baja_materia.textChanged.connect(
+            self.actualizar_combo_baja_alumno
+        )
+
+        # conexión impormir horario alumnos
+        self.ui.btn_generar_pdf.clicked.connect(self.generar_horario_pdf)
+        self.ui.input_buscar_horario.textChanged.connect(
+            self.actualizar_combo_horario_alumno
         )
 
         # ===============================
@@ -2742,6 +2780,494 @@ class MainWindow(QMainWindow):
         self.ui.input_clave_update_materia.clear()
         self.ui.spin_creditos_update_materia.setValue(1)
         self.ui.spin_cupo_update_materia.setValue(1)
+
+    # inscribir materia
+    def inscribir_materias(self):
+        try:
+            alumno_seleccionado = self.ui.combo_inscribir_alumno.currentText()
+            if not alumno_seleccionado:
+                QMessageBox.warning(self, "Advertencia", "Selecciona un alumno.")
+                return
+
+            # Extrae matrícula del combo (suponiendo formato "A001 - Juan Pérez")
+            matricula = alumno_seleccionado.split(" - ")[0]
+
+            conexion = connect_db()
+            cursor = conexion.cursor()
+
+            # Buscar ID del alumno
+            cursor.execute("SELECT id FROM alumnos WHERE matricula = %s", (matricula,))
+            resultado = cursor.fetchone()
+            if not resultado:
+                QMessageBox.critical(self, "Error", "Alumno no encontrado.")
+                return
+            id_alumno = resultado[0]
+
+            # Obtener materias seleccionadas
+            seleccionadas = self.ui.lista_materias_inscribir.selectedItems()
+            if not seleccionadas:
+                QMessageBox.warning(
+                    self, "Advertencia", "Selecciona al menos una materia."
+                )
+                return
+
+            inscritas = []
+            ya_inscritas = []
+            sin_cupo = []
+
+            for item in seleccionadas:
+                clave = item.text().split(" - ")[0]  # "MAT001 - Matemáticas"
+                cursor.execute(
+                    "SELECT COUNT(*) FROM alumnos_materias WHERE id_alumno = %s AND clave_materia = %s",
+                    (id_alumno, clave),
+                )
+                if cursor.fetchone()[0] > 0:
+                    ya_inscritas.append(clave)
+                    continue
+
+                cursor.execute("SELECT cupo FROM materias WHERE clave = %s", (clave,))
+                resultado = cursor.fetchone()
+                if not resultado or resultado[0] <= 0:
+                    sin_cupo.append(clave)
+                    continue
+
+                # Insertar e inscribir
+                cursor.execute(
+                    "INSERT INTO alumnos_materias (id_alumno, clave_materia) VALUES (%s, %s)",
+                    (id_alumno, clave),
+                )
+                cursor.execute(
+                    "UPDATE materias SET cupo = cupo - 1 WHERE clave = %s", (clave,)
+                )
+                inscritas.append(clave)
+
+            conexion.commit()
+            conexion.close()
+
+            resumen = []
+            if inscritas:
+                resumen.append(f"✅ Inscritas: {', '.join(inscritas)}")
+            if ya_inscritas:
+                resumen.append(f"⚠️ Ya inscritas: {', '.join(ya_inscritas)}")
+            if sin_cupo:
+                resumen.append(f"❌ Sin cupo: {', '.join(sin_cupo)}")
+
+            QMessageBox.information(self, "Resultado", "\n".join(resumen))
+
+        except Exception as e:
+            print("❌ Error al inscribir materias:", e)
+            QMessageBox.critical(
+                self, "Error", "Ocurrió un error al inscribir materias."
+            )
+
+    def actualizar_combo_inscribir_alumno(self):
+        texto = self.ui.input_buscar_inscribir.text().strip().upper()
+        print("🔍 Buscando alumnos para inscribir con texto:", texto)
+
+        try:
+            conexion = connect_db()
+            cursor = conexion.cursor()
+            query = """
+                SELECT id, nombre, apellido_paterno, apellido_materno
+                FROM alumnos
+                WHERE (UPPER(nombre) LIKE %s OR UPPER(matricula) LIKE %s) AND activo = 1
+            """
+            like_text = f"%{texto}%"
+            cursor.execute(query, (like_text, like_text))
+            alumnos = cursor.fetchall()
+            conexion.close()
+
+            self.ui.combo_inscribir_alumno.clear()
+            for alumno_id, nombre, paterno, materno in alumnos:
+                etiqueta = f"{nombre} {paterno} {materno}"
+                self.ui.combo_inscribir_alumno.addItem(
+                    etiqueta, alumno_id
+                )  # <-- ASIGNA ID AQUÍ
+
+            print("✅ Combo de alumnos actualizado")
+
+        except Exception as e:
+            print("❌ Error al buscar alumnos para inscripción:", e)
+
+    def cargar_materias_disponibles(self):
+        alumno_id = self.ui.combo_inscribir_alumno.currentData()
+        print("🎯 Alumno seleccionado:", alumno_id)
+
+        if not alumno_id:
+            print("❗ No se ha seleccionado un alumno válido")
+            return
+
+        try:
+            conexion = connect_db()
+            cursor = conexion.cursor()
+
+            query = """
+                SELECT m.id, m.nombre
+                FROM materias m
+                WHERE m.id NOT IN (
+                    SELECT materia_id FROM alumnos_materias WHERE alumno_id = %s
+                )
+            """
+            cursor.execute(query, (alumno_id,))
+            materias = cursor.fetchall()
+            conexion.close()
+
+            self.ui.lista_materias_inscribir.clear()
+            for materia_id, nombre in materias:
+                item = QListWidgetItem(nombre)
+                item.setData(Qt.ItemDataRole.UserRole, materia_id)
+                self.ui.lista_materias_inscribir.addItem(item)
+
+            print("✅ Materias disponibles cargadas")
+
+        except Exception as e:
+            print("❌ Error al cargar materias disponibles:", e)
+
+    def actualizar_combo_baja_alumno(self):
+        texto = self.ui.input_buscar_baja_materia.text().strip().upper()
+        print("🔍 Buscando alumnos para baja con texto:", texto)
+
+        try:
+            conexion = connect_db()
+            cursor = conexion.cursor()
+            query = """
+                SELECT id, nombre, apellido_paterno, apellido_materno
+                FROM alumnos
+                WHERE (UPPER(nombre) LIKE %s OR UPPER(matricula) LIKE %s) AND activo = 1
+            """
+            like_text = f"%{texto}%"
+            cursor.execute(query, (like_text, like_text))
+            alumnos = cursor.fetchall()
+            conexion.close()
+
+            self.ui.combo_baja_alumno.clear()
+            for alumno_id, nombre, paterno, materno in alumnos:
+                etiqueta = f"{nombre} {paterno} {materno}"
+                self.ui.combo_baja_alumno.addItem(etiqueta, alumno_id)
+
+            print("✅ Combo de alumnos actualizado para baja")
+
+        except Exception as e:
+            print("❌ Error al buscar alumnos:", e)
+
+    def cargar_materias_inscritas(self):
+        alumno_id = self.ui.combo_baja_alumno.currentData()
+        print("🎯 Alumno seleccionado para baja:", alumno_id)
+
+        if not alumno_id:
+            print("❗ No se ha seleccionado un alumno válido")
+            return
+
+        try:
+            conexion = connect_db()
+            cursor = conexion.cursor()
+            query = """
+                SELECT m.id, m.nombre
+                FROM materias m
+                JOIN alumnos_materias am ON am.materia_id = m.id
+                WHERE am.alumno_id = %s
+            """
+            cursor.execute(query, (alumno_id,))
+            materias = cursor.fetchall()
+            conexion.close()
+
+            self.ui.lista_materias_baja.clear()
+            for mat_id, nombre in materias:
+                item = QListWidgetItem(nombre)
+                item.setData(Qt.ItemDataRole.UserRole, mat_id)
+                self.ui.lista_materias_baja.addItem(item)
+
+            print("✅ Materias inscritas cargadas")
+
+        except Exception as e:
+            print("❌ Error al cargar materias inscritas:", e)
+
+    def dar_de_baja_materias(self):
+        alumno_id = self.ui.combo_baja_alumno.currentData()
+        seleccionadas = self.ui.lista_materias_baja.selectedItems()
+
+        if not alumno_id or not seleccionadas:
+            QMessageBox.warning(
+                self, "Advertencia", "Selecciona un alumno y al menos una materia."
+            )
+            return
+
+        try:
+            conexion = connect_db()
+            cursor = conexion.cursor()
+            for item in seleccionadas:
+                materia_id = item.data(Qt.ItemDataRole.UserRole)
+                cursor.execute(
+                    "DELETE FROM alumnos_materias WHERE alumno_id = %s AND materia_id = %s",
+                    (alumno_id, materia_id),
+                )
+            conexion.commit()
+            conexion.close()
+
+            QMessageBox.information(
+                self, "Baja exitosa", "Materias dadas de baja correctamente."
+            )
+            self.cargar_materias_inscritas()
+
+        except Exception as e:
+            print("❌ Error al dar de baja materias:", e)
+
+    def actualizar_combo_baja_alumno(self):
+        texto = self.ui.input_buscar_baja_materia.text().strip().upper()
+        print(f"📥 Buscando alumnos para baja con: {texto}")
+
+        try:
+            conexion = connect_db()
+            cursor = conexion.cursor()
+
+            query = """
+                SELECT id, nombre, apellido_paterno, apellido_materno
+                FROM alumnos
+                WHERE activo = 1 AND (
+                    UPPER(nombre) LIKE %s OR
+                    UPPER(apellido_paterno) LIKE %s OR
+                    UPPER(apellido_materno) LIKE %s OR
+                    UPPER(matricula) LIKE %s
+                )
+            """
+            valor = f"%{texto}%"
+            cursor.execute(query, (valor, valor, valor, valor))
+            alumnos = cursor.fetchall()
+            conexion.close()
+
+            self.ui.combo_baja_alumno.clear()
+            for alumno_id, nombre, paterno, materno in alumnos:
+                etiqueta = f"{nombre} {paterno} {materno}"
+                self.ui.combo_baja_alumno.addItem(etiqueta, alumno_id)
+
+            print(f"✅ {len(alumnos)} alumnos encontrados")
+
+        except Exception as e:
+            print("❌ Error al actualizar combo de baja de alumnos:", e)
+
+    def generar_horario_pdf(self):
+        id_alumno = self.ui.combo_horario_alumno.currentData()
+        print("🎯 Alumno seleccionado:", id_alumno)
+
+        if id_alumno is None:
+            QMessageBox.warning(self, "Error", "Selecciona un alumno válido.")
+            return
+
+        try:
+            conexion = connect_db()
+            cursor = conexion.cursor()
+
+            query = """
+                SELECT 
+                    m.nombre AS materia,
+                    h.dia_semana,
+                    h.hora_inicio,
+                    h.hora_fin,
+                    s.numero_salon
+                FROM alumnos_materias AS am
+                JOIN materias AS m ON am.clave_materia = m.clave
+                LEFT JOIN horarios_materias AS h ON h.clave_materia = m.clave
+                LEFT JOIN salones_materias AS sm ON sm.clave_materia = m.clave
+                LEFT JOIN salones AS s ON s.id = sm.id_salon
+                WHERE am.id = %s
+                ORDER BY 
+                    FIELD(h.dia_semana, 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes'),
+                    h.hora_inicio
+            """
+            cursor.execute(query, (id_alumno,))
+            resultados = cursor.fetchall()
+            conexion.close()
+
+            if not resultados:
+                QMessageBox.information(
+                    self, "Horario vacío", "El alumno no tiene materias inscritas."
+                )
+                return
+
+            # === Crear PDF
+            ruta, _ = QFileDialog.getSaveFileName(
+                self,
+                "Guardar Horario en PDF",
+                "horario.pdf",
+                "Archivos PDF (*.pdf)",
+            )
+            if not ruta:
+                return
+
+            from reportlab.pdfgen import canvas
+            from reportlab.lib.pagesizes import letter
+
+            c = canvas.Canvas(ruta, pagesize=letter)
+            c.setFont("Helvetica-Bold", 16)
+            c.drawString(200, 750, "Horario del Alumno")
+            c.setFont("Helvetica", 12)
+
+            y = 720
+            for materia, dia, hora_inicio, hora_fin, salon in resultados:
+                linea = f"{dia} - {materia} ({hora_inicio} - {hora_fin}) | Salón: {salon if salon else '—'}"
+                c.drawString(50, y, linea)
+                y -= 20
+                if y < 100:
+                    c.showPage()
+                    y = 750
+
+            c.save()
+            QMessageBox.information(
+                self, "PDF generado", "El horario se ha guardado correctamente."
+            )
+            print("✅ PDF generado correctamente.")
+
+        except Exception as e:
+            print("❌ Error al consultar materias del alumno:", e)
+            QMessageBox.critical(self, "Error", f"No se pudo generar el horario.\n{e}")
+
+    def actualizar_combo_horario_alumno(self):
+        texto = self.ui.input_buscar_horario.text().strip().upper()
+        print("🔍 Buscando alumno para horario:", texto)
+
+        try:
+            conexion = connect_db()
+            cursor = conexion.cursor()
+
+            query = """
+                SELECT id, CONCAT(nombre, ' ', apellido_paterno, ' ', apellido_materno) AS nombre_completo
+                FROM alumnos
+                WHERE (UPPER(nombre) LIKE %s OR UPPER(apellido_paterno) LIKE %s OR 
+                    UPPER(apellido_materno) LIKE %s OR matricula LIKE %s)
+                AND activo = 1
+            """
+            like = f"%{texto}%"
+            cursor.execute(query, (like, like, like, like))
+            resultados = cursor.fetchall()
+            conexion.close()
+
+            self.ui.combo_horario_alumno.clear()
+            self.ui.combo_horario_alumno.addItem("Selecciona un alumno", None)
+
+            for id_alumno, nombre in resultados:
+                self.ui.combo_horario_alumno.addItem(nombre, id_alumno)
+
+        except Exception as e:
+            print("❌ Error al buscar alumnos para horario:", e)
+
+    from reportlab.lib.pagesizes import letter
+    from reportlab.pdfgen import canvas
+    import os
+    from datetime import datetime
+
+    # 'letter' is already imported above, so you can use it directly
+    from fpdf import FPDF
+    import os
+
+    def generar_horario_pdf(self):
+        id_alumno = self.ui.combo_horario_alumno.currentData()
+        print("🎯 Alumno seleccionado:", id_alumno)
+
+        if id_alumno is None:
+            QMessageBox.warning(self, "Error", "Selecciona un alumno válido.")
+            return
+
+        try:
+            conexion = connect_db()
+            cursor = conexion.cursor()
+
+            # Obtener nombre completo del alumno
+            cursor.execute(
+                """
+                SELECT nombre, apellido_paterno, apellido_materno 
+                FROM alumnos 
+                WHERE id = %s
+            """,
+                (id_alumno,),
+            )
+            alumno = cursor.fetchone()
+
+            if not alumno:
+                QMessageBox.warning(self, "Error", "Alumno no encontrado.")
+                return
+
+            nombre = alumno[0]
+            apellido_paterno = alumno[1]
+            apellido_materno = alumno[2]
+            nombre_completo = f"{nombre} {apellido_paterno} {apellido_materno}"
+
+            # Obtener materias inscritas con horario y salón
+            query = """
+                SELECT 
+                    m.clave,
+                    m.nombre,
+                    h.dia_semana,
+                    h.hora_inicio,
+                    h.hora_fin,
+                    s.id AS salon_id
+                FROM alumnos_materias am
+                JOIN materias m ON am.materia_id = m.id
+                LEFT JOIN horarios_materias h ON m.clave = h.clave_materia
+                LEFT JOIN salones_materias s ON m.clave = s.clave_materia
+                WHERE am.alumno_id = %s
+                ORDER BY 
+                    FIELD(h.dia_semana, 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado'),
+                    h.hora_inicio
+            """
+            cursor.execute(query, (id_alumno,))
+            materias = cursor.fetchall()
+            conexion.close()
+
+            if not materias:
+                QMessageBox.information(
+                    self, "Horario vacío", "Este alumno no tiene materias inscritas."
+                )
+                return
+
+            # Crear PDF
+            pdf = FPDF()
+            pdf.add_page()
+            pdf.set_font("Arial", "B", 14)
+            pdf.cell(0, 10, "Horario Escolar", ln=True, align="C")
+            pdf.ln(5)
+            pdf.set_font("Arial", "", 12)
+            pdf.cell(0, 10, f"Alumno: {nombre_completo}", ln=True)
+            pdf.ln(5)
+
+            pdf.set_font("Arial", "B", 11)
+            pdf.cell(30, 10, "Clave", 1)
+            pdf.cell(50, 10, "Materia", 1)
+            pdf.cell(30, 10, "Día", 1)
+            pdf.cell(30, 10, "Inicio", 1)
+            pdf.cell(30, 10, "Fin", 1)
+            pdf.cell(20, 10, "Salón", 1)
+            pdf.ln()
+
+            pdf.set_font("Arial", "", 11)
+            for clave, materia, dia, inicio, fin, salon in materias:
+                pdf.cell(30, 10, clave or "-", 1)
+                pdf.cell(50, 10, materia or "-", 1)
+                pdf.cell(30, 10, dia or "-", 1)
+                pdf.cell(30, 10, str(inicio) if inicio else "-", 1)
+                pdf.cell(30, 10, str(fin) if fin else "-", 1)
+                pdf.cell(20, 10, str(salon) if salon else "-", 1)
+                pdf.ln()
+
+            # Guardar en ruta relativa dentro de src/
+            nombre_archivo = f"horario_{nombre.lower()}_{apellido_paterno.lower()}.pdf"
+            ruta_pdf = os.path.join(os.path.dirname(__file__), nombre_archivo)
+            pdf.output(ruta_pdf)
+
+            QMessageBox.information(
+                self, "PDF generado", f"Horario guardado como {nombre_archivo}"
+            )
+            print("✅ PDF generado correctamente en:", ruta_pdf)
+
+            # Abrir el PDF automáticamente
+            os.system(f"open '{ruta_pdf}'")  # macOS
+            # os.startfile(ruta_pdf)        # Windows
+            # subprocess.call(["xdg-open", ruta_pdf])  # Linux
+
+        except Exception as e:
+            print("❌ Error al consultar materias del alumno:", e)
+            QMessageBox.critical(
+                self, "Error", "Ocurrió un error al generar el horario."
+            )
 
 
 if __name__ == "__main__":
