@@ -23,7 +23,7 @@ QWidget#contenedor_menu_completo QLabel#titulo {
 
 /* === Sidebar pequeño (solo iconos) === */
 QWidget#contenedor_menu_iconos {
-    background-color: #b71c1c;
+    background-color: #c62828;
     border-top-right-radius: 15px;
     border-bottom-right-radius: 15px;
 }
@@ -187,9 +187,4 @@ QWidget#pagina_acercade QLabel {
 
 QWidget#pagina_acercade {
     background-color: #ffffff;
-}
-
-
-QLineEdit::placeholder {
-    color: #bbb; /* O el color tenue que prefieras */
 }

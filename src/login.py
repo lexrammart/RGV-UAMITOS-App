@@ -130,9 +130,15 @@ def main():
             ui.errorLabel.setVisible(False)
             print("Login exitoso desde la consola")
 
-            # Aquí podrías cerrar esta ventana y abrir la ventana principal de tu aplicación
-            if rol == "administrativo":
+            # cerrar esta ventana y abrir la ventana principal de tu aplicación
+            if rol == "ADMINISTRATIVO":
                 subprocess.Popen(["python3", "src/administrativos.py"])
+                window.close()
+            elif rol == "PROFESOR" or rol == "MAESTRO":
+                subprocess.Popen(["python3", "src/maestros.py"])
+                window.close()
+            elif rol == "DIRECTIVO":
+                subprocess.Popen(["python3", "src/directivo.py"])
                 window.close()
             else:
                 ui.errorLabel.setText(f"Rol no soportado {rol}")
